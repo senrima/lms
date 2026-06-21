@@ -4,7 +4,7 @@ import '../index.css';
 
 const _0xDbChunks = ["aHR0cHM6Ly9zY3JpcHQuZ29v", "Z2xlLmNvbS9tYWNyb3Mvcy9B", "S2Z5Y2J6RXdlUkQ2dTVmeGVH", "SEtOR0VJTFhZOWkzcXhibTdP", "QVlMZHRaeGxHdmdEOXhDb01D", "aUN3OGJDbmpDLXhad3cxbksv", "ZXhlYw=="];
 //const DEFAULT_SHEETS_URL = atob(_0xDbChunks.join(""));
-const DEFAULT_SHEETS_URL = "https://lms.senrima-ms.workers.dev/";
+const DEFAULT_SHEETS_URL = "https://lms.senrima-ms.workers.dev/?kunci=RAHASIA-S-TOOLS";
 const LOGIN_PORTAL_URL = "https://s-tools.id/edu/page-instruktur.html";
 
 if (localStorage.getItem('edu_sheets_url') !== DEFAULT_SHEETS_URL) {
