@@ -15,70 +15,56 @@
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
 <body>
   <div id="root"></div>
 
   <script type="text/babel">
-    const _0xDbChunks = [
-        "aHR0cHM6Ly9zY3JpcHQuZ29v",
-        "Z2xlLmNvbS9tYWNyb3Mvcy9B",
-        "S2Z5Y2J6RXdlUkQ2dTVmeGVH",
-        "SEtOR0VJTFhZOWkzcXhibTdP",
-        "QVlMZHRaeGxHdmdEOXhDb01D",
-        "aUN3OGJDbmpDLXhad3cxbksv",
-        "ZXhlYw=="
-    ];
+    const API_ENDPOINT = "https://api.s-tools.id";
+    const LOGIN_PORTAL_URL = "https://s-tools.id/edu/page-instruktur.html";
+    const _0xDbChunks = ["aHR0cHM6Ly9zY3JpcHQuZ29v", "Z2xlLmNvbS9tYWNyb3Mvcy9B", "S2Z5Y2J6RXdlUkQ2dTVmeGVH", "SEtOR0VJTFhZOWkzcXhibTdP", "QVlMZHRaeGxHdmdEOXhDb01D", "aUN3OGJDbmpDLXhad3cxbksv", "ZXhlYw=="];
     const DEFAULT_SHEETS_URL = atob(_0xDbChunks.join(""));
     const EMAIL_BUTTONS_HTML = `<br><br><div style="text-align:center;"><a href="https://s-tools.id/edu/" style="background-color: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold; font-family: sans-serif; margin-right: 10px; margin-bottom: 10px;">Masuk ke Dashboard</a></div>`;
+
+    const IconWrapper = ({ name, size = 24, className = "", weight="regular" }) => <i className={`ph${weight === 'fill' ? '-fill' : weight === 'duotone' ? '-duotone' : weight === 'bold' ? '-bold' : ''} ph-${name} ${className}`} style={{ fontSize: size }}></i>;
+    const Database = (p) => <IconWrapper name="database" {...p} />; const Book = (p) => <IconWrapper name="book" {...p} />; const Users = (p) => <IconWrapper name="users" {...p} />; const MessageSquare = (p) => <IconWrapper name="chat-circle" {...p} />; const Article = (p) => <IconWrapper name="article" {...p} />; const UserIcon = (p) => <IconWrapper name="user" {...p} />; const LogOut = (p) => <IconWrapper name="sign-out" {...p} />; const PlusCircle = (p) => <IconWrapper name="plus-circle" {...p} />; const Video = (p) => <IconWrapper name="video" {...p} />; const RefreshCw = (p) => <IconWrapper name="arrows-clockwise" {...p} />; const CheckCircle2 = (p) => <IconWrapper name="check-circle" {...p} />; const X = (p) => <IconWrapper name="x" {...p} />; const BookOpen = (p) => <IconWrapper name="book-open" {...p} />; const ChevronRight = (p) => <IconWrapper name="caret-right" {...p} />; const CheckSquareOffset = (p) => <IconWrapper name="check-square-offset" {...p} />; const Trash2 = (p) => <IconWrapper name="trash" {...p} />; const GraduationCap = (p) => <IconWrapper name="graduation-cap" {...p} />; const AlertCircle = (p) => <IconWrapper name="warning-circle" {...p} />; const ToggleLeft = (p) => <IconWrapper name="toggle-left" {...p} />; const ToggleRight = (p) => <IconWrapper name="toggle-right" {...p} />; const ArrowLeft = (p) => <IconWrapper name="arrow-left" {...p} />; const PlayCircle = (p) => <IconWrapper name="play-circle" {...p} />; const Menu = (p) => <IconWrapper name="list" {...p} />; const Coffee = (p) => <IconWrapper name="coffee" {...p} />; const Lock = (p) => <IconWrapper name="lock" {...p} />; const MagnifyingGlass = (p) => <IconWrapper name="magnifying-glass" {...p} />; const Bell = (p) => <IconWrapper name="bell" {...p} />;
 
     const emptyExam = { minScore: 70, questions: Array.from({length: 10}, () => ({ q: '', options: ['','','',''], answer: 0 })) };
 
     const formatVideoUrl = (rawUrl) => {
-        if (!rawUrl) return "";
-        let url = rawUrl.trim();
+        if (!rawUrl) return ""; let url = rawUrl.trim();
         try {
-          if (url.includes('youtu.be/')) { const videoId = url.split('youtu.be/')[1].split('?')[0].split('&')[0]; return `https://www.youtube.com/embed/${videoId}`; }
-          if (url.includes('youtube.com/watch')) { const urlObj = new URL(url); const videoId = urlObj.searchParams.get('v'); if (videoId) return `https://www.youtube.com/embed/${videoId}`; }
-          if (url.includes('drive.google.com/file/d/')) { const match = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/); if (match && match[1]) { return `https://drive.google.com/file/d/${match[1]}/preview`; } }
+          if (url.includes('youtu.be/')) return `https://www.youtube.com/embed/${url.split('youtu.be/')[1].split('?')[0].split('&')[0]}`;
+          if (url.includes('youtube.com/watch')) return `https://www.youtube.com/embed/${new URL(url).searchParams.get('v')}`;
+          if (url.includes('youtube.com/shorts/')) return `https://www.youtube.com/embed/${url.split('shorts/')[1].split('?')[0].split('&')[0]}`;
+          if (url.includes('drive.google.com/file/d/')) return `https://drive.google.com/file/d/${url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/)[1]}/preview`;
         } catch (e) {} return url;
     };
 
     const calcProgress = (enr, crs) => { 
         if (!crs || !crs.modules || crs.modules.length === 0 || !enr) return 0; 
         if (enr.isGraduated) return 100;
-        let completedArray = [];
-        if (Array.isArray(enr.completedModules)) { completedArray = enr.completedModules; } 
-        else if (typeof enr.completedModules === 'string') { try { completedArray = JSON.parse(enr.completedModules); } catch (e) { completedArray = []; } }
+        let completedArray = Array.isArray(enr.completedModules) ? enr.completedModules : (typeof enr.completedModules === 'string' ? JSON.parse(enr.completedModules || "[]") : []);
         let prog = Math.round((completedArray.length / crs.modules.length) * 100); 
         return prog > 100 ? 100 : prog;
     };
 
-    const IconWrapper = ({ name, size = 24, className = "", weight="regular" }) => <i className={`ph${weight === 'fill' ? '-fill' : weight === 'duotone' ? '-duotone' : weight === 'bold' ? '-bold' : ''} ph-${name} ${className}`} style={{ fontSize: size }}></i>;
-    const Database = (p) => <IconWrapper name="database" {...p} />;
-    const Book = (p) => <IconWrapper name="book" {...p} />;
-    const Users = (p) => <IconWrapper name="users" {...p} />;
-    const MessageSquare = (p) => <IconWrapper name="chat-circle" {...p} />;
-    const Article = (p) => <IconWrapper name="article" {...p} />;
-    const UserIcon = (p) => <IconWrapper name="user" {...p} />;
-    const LogOut = (p) => <IconWrapper name="sign-out" {...p} />;
-    const PlusCircle = (p) => <IconWrapper name="plus-circle" {...p} />;
-    const Video = (p) => <IconWrapper name="video" {...p} />;
-    const RefreshCw = (p) => <IconWrapper name="arrows-clockwise" {...p} />;
-    const CheckCircle2 = (p) => <IconWrapper name="check-circle" {...p} />;
-    const X = (p) => <IconWrapper name="x" {...p} />;
-    const BookOpen = (p) => <IconWrapper name="book-open" {...p} />;
-    const ChevronRight = (p) => <IconWrapper name="caret-right" {...p} />;
-    const CheckSquareOffset = (p) => <IconWrapper name="check-square-offset" {...p} />;
-    const Trash2 = (p) => <IconWrapper name="trash" {...p} />;
-    const GraduationCap = (p) => <IconWrapper name="graduation-cap" {...p} />;
-    const AlertCircle = (p) => <IconWrapper name="warning-circle" {...p} />;
-    const ToggleLeft = (p) => <IconWrapper name="toggle-left" {...p} />;
-    const ToggleRight = (p) => <IconWrapper name="toggle-right" {...p} />;
-    const ArrowLeft = (p) => <IconWrapper name="arrow-left" {...p} />;
-    const PlayCircle = (p) => <IconWrapper name="play-circle" {...p} />;
-    const Menu = (p) => <IconWrapper name="list" {...p} />;
+    const PromoTimer = () => {
+        const [timeLeft, setTimeLeft] = React.useState("");
+        React.useEffect(() => {
+            const timer = setInterval(() => {
+                const now = new Date(); const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59); const diff = endOfDay - now;
+                if (diff <= 0) setTimeLeft("00:00:00");
+                else setTimeLeft(`${Math.floor((diff / 3600000) % 24).toString().padStart(2, '0')}:${Math.floor((diff / 60000) % 60).toString().padStart(2, '0')}:${Math.floor((diff / 1000) % 60).toString().padStart(2, '0')}`);
+            }, 1000);
+            return () => clearInterval(timer);
+        }, []);
+        if(!timeLeft) return null;
+        return (<div className="inline-flex items-center gap-2 bg-rose-50 border border-rose-200 text-rose-600 px-5 py-2.5 rounded-full mb-6 shadow-sm animate-pulse mx-auto"><IconWrapper name="timer" size={20} weight="bold" /><span className="text-sm font-bold">Promo Diskon Berakhir Hari Ini: <span className="font-mono text-base ml-1 tracking-widest">{timeLeft}</span></span></div>);
+    };
 
     function InstrukturApp() {
       const [session, setSession] = React.useState(() => JSON.parse(sessionStorage.getItem('edu_session')) || null);
@@ -95,11 +81,15 @@
       const [searchCourse, setSearchCourse] = React.useState("");
       const [searchPart, setSearchPart] = React.useState("");
       const [toast, setToast] = React.useState(null);
-      const [confirmDialog, setConfirmDialog] = React.useState({ isOpen: false, message: "", onConfirm: null });
       
+      const [confirmDialog, setConfirmDialog] = React.useState({ isOpen: false, message: "", onConfirm: null });
       const [examModalOpen, setExamModalOpen] = React.useState(false);
       const [examCourseId, setExamCourseId] = React.useState(null);
       const [examForm, setExamForm] = React.useState(emptyExam);
+      
+      const [reqQuotaModal, setReqQuotaModal] = React.useState({ isOpen: false, reason: "", reqCourses: 5, reqParticipants: 50 });
+      const [showPricingModal, setShowPricingModal] = React.useState(false);
+
       const [profileForm, setProfileForm] = React.useState({ donationLink: "", whatsapp: "" });
       const [infoInstForm, setInfoInstForm] = React.useState({ text: '', show: false }); 
 
@@ -111,16 +101,21 @@
       const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
 
       React.useEffect(() => {
-        if (!session || session.role !== 'admin') {
-          window.location.href = 'index.html';
-        }
+        if (!session || session.role !== 'admin') window.location.href = 'index.html';
       }, [session]);
 
       React.useEffect(() => {
-          const fetchUrl = DEFAULT_SHEETS_URL + '?nocache=' + new Date().getTime();
-          fetch(fetchUrl).then(res => res.json()).then(data => {
+          fetch(DEFAULT_SHEETS_URL + '?nocache=' + new Date().getTime()).then(res => res.json()).then(data => {
                 if(data.admins) setAdmins(data.admins);
-                if(data.courses) setCourses(data.courses);
+                if(data.courses) {
+                    const normCourses = data.courses.map(c => {
+                        let exam = c.exam || { minScore: 70, questions: [] };
+                        if (!exam.questions) exam.questions = [];
+                        while(exam.questions.length < 10) exam.questions.push({ q: '', options: ['','','',''], answer: 0 });
+                        c.exam = exam; return c;
+                    });
+                    setCourses(normCourses);
+                }
                 if(data.participants) setParticipants(data.participants);
                 if(data.enrollments) setEnrollments(data.enrollments);
                 if(data.notifications) setNotifications(data.notifications);
@@ -138,22 +133,18 @@
         try {
             localAction();
             const payload = { admins, courses, participants, enrollments, notifications };
-            const postUrl = DEFAULT_SHEETS_URL + '?nocache=' + new Date().getTime();
-            fetch(postUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) }).catch(console.error);
+            fetch(DEFAULT_SHEETS_URL + '?nocache=' + new Date().getTime(), { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) }).catch(console.error);
         } catch (error) { showToast("Gagal menyimpan."); }
       };
 
-      const triggerEmail = (emailAction) => {
-          const postUrl = DEFAULT_SHEETS_URL + '?nocache=' + new Date().getTime();
-          fetch(postUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ emailAction }) }).catch(console.error);
-      };
-
+      const triggerEmail = (emailAction) => { fetch(DEFAULT_SHEETS_URL + '?nocache=' + new Date().getTime(), { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ emailAction }) }).catch(console.error); };
       const handleLogout = () => { sessionStorage.removeItem('edu_session'); window.location.href = 'index.html'; };
 
       const handleCreateCourse = async (e) => {
         e.preventDefault(); const fd = new FormData(e.target); const code = fd.get('code').trim().toUpperCase();
+        if (courses.some(c => c.code === code)) return showToast("Kode sudah ada!");
         const myAdmin = admins.find(a => String(a.id) === String(session.data.id));
-        if (myAdmin.maxCourses <= 0) return showToast("Kuota kelas habis!");
+        if (myAdmin.maxCourses <= 0) { setConfirmDialog({ isOpen: true, message: "Kuota kelas habis (0). Silakan ajukan penambahan limit.", onConfirm: null }); return; }
 
         const courseData = { authorId: session.data.id, code, title: fd.get('title'), instructor: fd.get('inst'), isActive: true, docLink: fd.get('docLink'), modules: [], exam: emptyExam };
         await execDbAction(() => {
@@ -165,64 +156,70 @@
 
       const handleCreateModule = async (e) => {
         e.preventDefault(); const fd = new FormData(e.target); const courseId = fd.get('courseId');
-        const finalVideoUrl = formatVideoUrl(fd.get('vidUrl'));
-        const newModule = { id: `m_${Date.now()}`, title: fd.get('title'), videoUrl: finalVideoUrl, description: fd.get('desc'), comments: [] };
-        
-        await execDbAction(() => setCourses(courses.map(c => c.id === courseId ? { ...c, modules: [...c.modules, newModule] } : c))); 
-        e.target.reset(); showToast("Materi ditambah!");
+        if (enrollments.some(e => String(e.courseId) === String(courseId) && e.isGraduated)) {
+            setConfirmDialog({ isOpen: true, message: "Aksi ditolak! Tidak bisa menambah materi karena sudah ada peserta yang lulus.", onConfirm: null }); return;
+        }
+        const newModule = { id: `m_${Date.now()}`, title: fd.get('title'), videoUrl: formatVideoUrl(fd.get('vidUrl')), description: fd.get('desc'), comments: [] };
+        await execDbAction(() => setCourses(courses.map(c => c.id === courseId ? { ...c, modules: [...c.modules, newModule] } : c))); e.target.reset(); showToast("Materi ditambah!");
       };
 
       const handleDeleteModule = (courseId, moduleId) => {
-        setConfirmDialog({
-            isOpen: true, message: "Hapus materi video ini?",
-            onConfirm: async () => {
-                setConfirmDialog({ isOpen: false }); 
-                await execDbAction(() => setCourses(courses.map(c => c.id === courseId ? { ...c, modules: c.modules.filter(m => m.id !== moduleId) } : c))); 
-                showToast("Materi dihapus.");
-            }
-        });
+        if (enrollments.some(e => String(e.courseId) === String(courseId) && e.isGraduated)) {
+            setConfirmDialog({ isOpen: true, message: "Aksi ditolak! Tidak dapat menghapus modul video karena ada peserta lulus.", onConfirm: null }); return;
+        }
+        setConfirmDialog({ isOpen: true, message: "Hapus materi video ini?", onConfirm: async () => {
+            setConfirmDialog({ isOpen: false }); 
+            await execDbAction(() => setCourses(courses.map(c => c.id === courseId ? { ...c, modules: c.modules.filter(m => m.id !== moduleId) } : c))); showToast("Materi dihapus.");
+        }});
       };
 
       const handleRegisterParticipant = async (e) => {
         e.preventDefault(); const fd = new FormData(e.target); const email = fd.get('email').trim().toLowerCase();
         if (participants.some(p => p.email === email)) return showToast("Email terdaftar!");
         const myAdmin = admins.find(a => String(a.id) === String(session.data.id));
-        if (myAdmin.maxParticipants <= 0) return showToast("Kuota siswa habis!");
+        if (myAdmin.maxParticipants <= 0) { setConfirmDialog({ isOpen: true, message: "Kuota pendaftaran siswa Anda habis (0).", onConfirm: null }); return; }
 
         const newPart = { id: `p_${Date.now()}`, name: fd.get('name').trim(), email, accessCode: fd.get('code').trim() };
         const newEnr = { id: `e_${Date.now()}`, participantId: newPart.id, courseId: fd.get('courseId'), completedModules: [], isGraduated: false, examScore: null };
-        
         await execDbAction(() => {
             setAdmins(admins.map(a => String(a.id) === String(session.data.id) ? { ...a, maxParticipants: a.maxParticipants - 1 } : a));
-            setParticipants([...participants, newPart]);
-            setEnrollments([...enrollments, newEnr]);
+            setParticipants([...participants, newPart]); setEnrollments([...enrollments, newEnr]);
         });
-        e.target.reset(); showToast("Peserta terdaftar!");
-        triggerEmail({ tujuan: email, subjek: "Pendaftaran Kelas Berhasil", namaPengguna: newPart.name, isiPesanInti: `Anda terdaftar di kelas baru.` + EMAIL_BUTTONS_HTML });
+        e.target.reset(); showToast("Peserta terdaftar!"); triggerEmail({ tujuan: email, subjek: "Pendaftaran Kelas Berhasil", namaPengguna: newPart.name, isiPesanInti: `Anda terdaftar di kelas baru.` + EMAIL_BUTTONS_HTML });
+      };
+
+      const handleEnrollExisting = async (e) => {
+        e.preventDefault(); const fd = new FormData(e.target); const email = fd.get('email').trim().toLowerCase(); const cId = fd.get('cId');
+        const participant = participants.find(p => p.email === email); if (!participant) return showToast("Peserta tidak ditemukan!");
+        if(enrollments.some(en => String(en.participantId) === String(participant.id) && String(en.courseId) === String(cId))) return showToast("Sudah terdaftar!");
+        const myAdmin = admins.find(a => String(a.id) === String(session.data.id));
+        if (myAdmin.maxParticipants <= 0) { setConfirmDialog({ isOpen: true, message: "Kuota siswa habis (0).", onConfirm: null }); return; }
+        await execDbAction(() => {
+            setAdmins(admins.map(a => String(a.id) === String(session.data.id) ? { ...a, maxParticipants: a.maxParticipants - 1 } : a));
+            setEnrollments([...enrollments, { id: `e_${Date.now()}`, participantId: participant.id, courseId: cId, completedModules: [], isGraduated: false, examScore: null }]);
+        }); showToast("Ditambahkan ke kusus!");
       };
 
       const openExamBuilder = (courseId) => {
         const course = courses.find(c => c.id === courseId);
         let currentExam = course.exam ? JSON.parse(JSON.stringify(course.exam)) : JSON.parse(JSON.stringify(emptyExam));
-        while (currentExam.questions.length < 10) currentExam.questions.push({ q: '', options: ['','','',''], answer: 0 });
         setExamCourseId(courseId); setExamForm(currentExam); setExamModalOpen(true);
       };
 
-      const handleSaveExam = async () => {
-        await execDbAction(() => setCourses(courses.map(c => c.id === examCourseId ? { ...c, exam: examForm } : c)));
-        setExamModalOpen(false); showToast("Ujian disimpan!");
+      const handleSaveExam = async () => { await execDbAction(() => setCourses(courses.map(c => c.id === examCourseId ? { ...c, exam: examForm } : c))); setExamModalOpen(false); showToast("Ujian disimpan!"); };
+
+      const handleRequestLimitIncrease = async (e) => {
+        e.preventDefault(); const myAdmin = admins.find(a => String(a.id) === String(session.data.id));
+        if (notifications.some(n => n.courseId === "REQ_UPGRADE" && n.moduleId === myAdmin.id && !n.isRead)) return showToast("Anda memiliki permintaan tertunda!");
+        const reqDetails = { name: myAdmin.name, username: myAdmin.username, reason: reqQuotaModal.reason.trim(), reqCourses: parseInt(reqQuotaModal.reqCourses) || 5, reqParticipants: parseInt(reqQuotaModal.reqParticipants) || 50 };
+        const superId = admins.find(a => a.isSuper === true || a.isSuper === 'true' || a.isSuper === 'TRUE')?.id || 'adm_super_rahasia';
+        await execDbAction(() => setNotifications([{ id: `n_req_${Date.now()}`, adminId: superId, text: JSON.stringify(reqDetails), isRead: false, time: "Baru saja", courseId: "REQ_UPGRADE", moduleId: myAdmin.id }, ...notifications]));
+        setReqQuotaModal({ isOpen: false, reason: "", reqCourses: 5, reqParticipants: 50 }); setConfirmDialog({ isOpen: true, message: "Pengajuan penambahan kuota terkirim.", onConfirm: null });
       };
 
-      const handleUpdateAdminInfo = async () => {
-          await execDbAction(() => setAdmins(admins.map(a => String(a.id) === String(session.data.id) ? { ...a, info3: infoInstForm.text, showInfo3: infoInstForm.show } : a))); 
-          showToast("Papan Informasi Diperbarui!");
-      };
-
-      const handleUpdateProfile = async (e) => {
-        e.preventDefault();
-        await execDbAction(() => setAdmins(admins.map(a => String(a.id) === String(session.data.id) ? { ...a, donationLink: profileForm.donationLink, whatsapp: profileForm.whatsapp } : a))); 
-        showToast("Profil Publik diperbarui!");
-      };
+      const handleUpdateAdminInfo = async () => { await execDbAction(() => setAdmins(admins.map(a => String(a.id) === String(session.data.id) ? { ...a, info3: infoInstForm.text, showInfo3: infoInstForm.show } : a))); showToast("Papan Informasi Diperbarui!"); };
+      const handleUpdateProfile = async (e) => { e.preventDefault(); await execDbAction(() => setAdmins(admins.map(a => String(a.id) === String(session.data.id) ? { ...a, donationLink: profileForm.donationLink, whatsapp: profileForm.whatsapp } : a))); showToast("Profil Publik diperbarui!"); };
+      const markNotifsRead = async () => { await execDbAction(() => setNotifications(notifications.map(n => String(n.adminId) === String(session.data.id) ? { ...n, isRead: true } : n))); };
 
       const jumpToClassroom = (courseId, targetModuleId = null) => {
         const course = courses.find(c => c.id === courseId);
@@ -234,9 +231,7 @@
       const handlePostComment = async (e) => {
         e.preventDefault(); if (!commentText.trim()) return;
         const newComment = { id: `cmt_${Date.now()}`, user: `${session.data.name} (Instruktur)`, text: commentText, isAdmin: true, time: "Baru saja" };
-        const latestCourse = courses.find(c => c.id === activeCourse.id) || activeCourse;
-        const updatedMods = latestCourse.modules.map(m => m.id === activeModule.id ? { ...m, comments: [...m.comments, newComment] } : m);
-        
+        const updatedMods = activeCourse.modules.map(m => m.id === activeModule.id ? { ...m, comments: [...m.comments, newComment] } : m);
         await execDbAction(() => setCourses(courses.map(c => c.id === activeCourse.id ? { ...c, modules: updatedMods } : c)));
         setActiveCourse(prev => ({ ...prev, modules: updatedMods })); setActiveModule(prev => ({ ...prev, comments: [...prev.comments, newComment] })); 
         setCommentText(""); showToast("Balasan terkirim!");
@@ -249,6 +244,9 @@
       const filteredMyCourses = myCourses.filter(c => c.title.toLowerCase().includes(searchCourse.toLowerCase()));
       const myEnrollments = enrollments.filter(e => myCourses.some(c=>String(c.id) === String(e.courseId)));
       const filteredMyEnrs = myEnrollments.filter(enr => { const p = participants.find(x => String(x.id) === String(enr.participantId)); return p?.name.toLowerCase().includes(searchPart.toLowerCase()); });
+      const myNotifs = notifications.filter(n => n.courseId !== "REQ_UPGRADE" && String(n.adminId) === String(session.data.id));
+      const unread = myNotifs.filter(n => !n.isRead).length;
+      const hasPendingRequest = notifications.some(n => n.courseId === "REQ_UPGRADE" && n.moduleId === myAdmin.id && !n.isRead);
 
       if (appMode === 'classroom' && activeCourse) {
         return (
@@ -298,7 +296,7 @@
       }
 
       return (
-        <div className="min-h-screen flex flex-col bg-slate-50">
+        <div className="min-h-screen flex flex-col bg-slate-50 animate-[fadeIn_200ms_ease-out]">
             {toast && <div className="fixed top-4 right-4 z-[100] bg-emerald-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2"><CheckCircle2 size={20}/><span>{toast}</span></div>}
             
             {confirmDialog.isOpen && (
@@ -306,7 +304,7 @@
                 <div className="bg-white rounded-3xl p-8 max-w-sm text-center shadow-2xl">
                   <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center text-red-600 mx-auto mb-4"><AlertCircle size={32} /></div>
                   <h3 className="text-xl font-bold mb-2">Konfirmasi Tindakan</h3><p className="text-sm text-slate-600 mb-6">{confirmDialog.message}</p>
-                  <div className="flex space-x-3"><button onClick={() => setConfirmDialog({ isOpen: false })} className="flex-1 bg-slate-100 py-3 rounded-xl font-bold">Batal</button><button onClick={confirmDialog.onConfirm} className="flex-1 bg-red-600 text-white py-3 rounded-xl font-bold">Ya, Hapus</button></div>
+                  <div className="flex space-x-3"><button onClick={() => setConfirmDialog({ isOpen: false })} className="flex-1 bg-slate-100 py-3 rounded-xl font-bold">Tutup</button>{confirmDialog.onConfirm && <button onClick={confirmDialog.onConfirm} className="flex-1 bg-red-600 text-white py-3 rounded-xl font-bold">Ya, Lanjutkan</button>}</div>
                 </div>
               </div>
             )}
@@ -314,110 +312,176 @@
             {examModalOpen && (
               <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
                 <div className="bg-white rounded-3xl w-full max-w-3xl flex flex-col max-h-[90vh]">
-                    <div className="p-6 border-b flex justify-between items-center bg-slate-50 rounded-t-3xl">
-                        <h2 className="text-xl font-bold">Pembuat Ujian (10 Soal)</h2><button onClick={()=>setExamModalOpen(false)} className="text-slate-600"><X size={24}/></button>
-                    </div>
+                    <div className="p-6 border-b flex justify-between items-center bg-slate-50 rounded-t-3xl"><h2 className="text-xl font-bold">Pembuat Ujian (10 Soal)</h2><button onClick={()=>setExamModalOpen(false)} className="text-slate-600"><X size={24}/></button></div>
                     <div className="p-6 overflow-y-auto flex-1 space-y-6">
-                        <div className="bg-amber-50 p-5 rounded-2xl border border-amber-200">
-                            <label className="font-bold text-amber-900 block mb-2">Target Minimal Kelulusan</label>
-                            <input type="number" min="0" max="100" value={examForm.minScore} onChange={e=>setExamForm({...examForm, minScore: parseInt(e.target.value)})} className="p-3 border rounded-xl font-bold" />
-                        </div>
+                        <div className="bg-amber-50 p-5 rounded-2xl border border-amber-200"><label className="font-bold text-amber-900 block mb-2">Target Minimal Kelulusan</label><input type="number" min="0" max="100" value={examForm.minScore} onChange={e=>setExamForm({...examForm, minScore: parseInt(e.target.value)})} className="p-3 border rounded-xl font-bold" /></div>
                         {examForm.questions.map((q, idx) => (
                             <div key={idx} className="bg-white p-5 rounded-2xl border shadow-sm">
                                 <label className="font-bold block mb-3">Soal {idx+1}</label>
                                 <textarea value={q.q} onChange={e=>{const newQ = [...examForm.questions]; newQ[idx].q = e.target.value; setExamForm({...examForm, questions: newQ});}} className="w-full p-3 mb-4 border rounded-xl" placeholder="Tulis soal..."></textarea>
-                                <div className="grid grid-cols-2 gap-3 mb-4">
-                                    {q.options.map((opt, optIdx) => (
-                                        <input key={optIdx} type="text" value={opt} onChange={e=>{const newQ = [...examForm.questions]; newQ[idx].options[optIdx] = e.target.value; setExamForm({...examForm, questions: newQ});}} className="p-3 border rounded-xl" placeholder={`Opsi ${optIdx+1}`} />
-                                    ))}
-                                </div>
-                                <div className="bg-slate-50 p-3 rounded-xl flex justify-between items-center">
-                                    <label className="text-sm font-bold">Jawaban Benar:</label>
-                                    <select value={q.answer} onChange={e=>{const newQ = [...examForm.questions]; newQ[idx].answer = parseInt(e.target.value); setExamForm({...examForm, questions: newQ});}} className="p-2 border rounded-lg font-bold">
-                                        {q.options.map((_, optIdx) => <option key={optIdx} value={optIdx}>Opsi {optIdx+1}</option>)}
-                                    </select>
-                                </div>
+                                <div className="grid grid-cols-2 gap-3 mb-4">{q.options.map((opt, optIdx) => (<input key={optIdx} type="text" value={opt} onChange={e=>{const newQ = [...examForm.questions]; newQ[idx].options[optIdx] = e.target.value; setExamForm({...examForm, questions: newQ});}} className="p-3 border rounded-xl" placeholder={`Opsi ${optIdx+1}`} />))}</div>
+                                <div className="bg-slate-50 p-3 rounded-xl flex justify-between items-center"><label className="text-sm font-bold">Jawaban Benar:</label><select value={q.answer} onChange={e=>{const newQ = [...examForm.questions]; newQ[idx].answer = parseInt(e.target.value); setExamForm({...examForm, questions: newQ});}} className="p-2 border rounded-lg font-bold">{q.options.map((_, optIdx) => <option key={optIdx} value={optIdx}>Opsi {optIdx+1}</option>)}</select></div>
                             </div>
                         ))}
                     </div>
-                    <div className="p-6 border-t bg-white rounded-b-3xl flex justify-end gap-4">
-                        <button onClick={handleSaveExam} className="px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold">Simpan Ujian</button>
-                    </div>
+                    <div className="p-6 border-t bg-white rounded-b-3xl flex justify-end gap-4"><button onClick={handleSaveExam} className="px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold">Simpan Ujian</button></div>
                 </div>
               </div>
             )}
 
-            <header className="bg-slate-900 text-white px-6 py-4 flex flex-col md:flex-row items-center justify-between shadow-md">
+            {reqQuotaModal.isOpen && (
+             <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+                 <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl">
+                     <div className="flex justify-between items-center border-b pb-4 mb-6"><div><h3 className="text-lg font-black text-slate-900">Ajukan Tambahan Kuota</h3></div><button onClick={() => setReqQuotaModal({ ...reqQuotaModal, isOpen: false })} className="w-8 h-8 rounded-full bg-slate-100"><X size={16} /></button></div>
+                     <form onSubmit={handleRequestLimitIncrease} className="space-y-4">
+                         <div className="grid grid-cols-2 gap-3">
+                             <div className="space-y-1"><label className="text-xs font-bold text-slate-500 uppercase block">Tambahan Kelas</label><input type="number" min="1" required value={reqQuotaModal.reqCourses} onChange={e => setReqQuotaModal({ ...reqQuotaModal, reqCourses: parseInt(e.target.value)||0 })} className="w-full p-3 bg-slate-50 border rounded-xl font-bold" /></div>
+                             <div className="space-y-1"><label className="text-xs font-bold text-slate-500 uppercase block">Tambahan Siswa</label><input type="number" min="1" required value={reqQuotaModal.reqParticipants} onChange={e => setReqQuotaModal({ ...reqQuotaModal, reqParticipants: parseInt(e.target.value)||0 })} className="w-full p-3 bg-slate-50 border rounded-xl font-bold" /></div>
+                         </div>
+                         <div className="space-y-1"><label className="text-xs font-bold text-slate-500 uppercase block">Alasan Pengajuan</label><textarea required rows="3" value={reqQuotaModal.reason} onChange={e => setReqQuotaModal({ ...reqQuotaModal, reason: e.target.value })} className="w-full p-3.5 bg-slate-50 border rounded-xl"></textarea></div>
+                         <button type="submit" className="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-xl">Kirim Pengajuan Resmi</button>
+                     </form>
+                 </div>
+             </div>
+            )}
+
+            {showPricingModal && (
+              <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
+                  <div className="bg-white rounded-[2rem] w-full max-w-5xl shadow-2xl flex flex-col max-h-[95vh] overflow-hidden">
+                      <div className="p-6 md:p-8 text-center relative border-b border-slate-100 flex flex-col items-center">
+                          <button onClick={() => setShowPricingModal(false)} className="absolute top-6 right-6 w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-500"><X size={20} weight="bold"/></button>
+                          <PromoTimer />
+                          <h2 className="text-2xl md:text-3xl font-black text-slate-900">Upgrade Kapasitas Sistem</h2>
+                          <p className="text-slate-500 mt-2 font-medium text-sm">Tambah batas jumlah kelas dan kapasitas pendaftaran siswa.</p>
+                      </div>
+                      <div className="p-6 md:p-10 overflow-y-auto bg-slate-50 flex-1">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto items-stretch">
+                              <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm flex flex-col">
+                                  <h3 className="text-xl font-bold text-center mb-4">Paket Starter</h3>
+                                  <div className="text-center mb-6"><span className="text-3xl font-black">Rp 50.000</span><p className="text-xs text-slate-400 mt-1 font-bold line-through">Rp 150.000</p></div>
+                                  <div className="space-y-4 flex-1 mb-8 text-sm font-bold text-slate-700">
+                                      <p className="flex items-center gap-3"><CheckCircle2 size={20} className="text-emerald-500" weight="fill"/> +5 Kelas & +50 Siswa</p>
+                                      <p className="flex items-center gap-3"><CheckCircle2 size={20} className="text-emerald-500" weight="fill"/> Link Pendaftaran Siswa</p>
+                                  </div>
+                                  <a href={`https://s-tools.id/payment/index.html?amount=50000&item=Paket Starter EduLearn&kode_aplikasi=APP-STOOLS`} target="_blank" className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold flex justify-center items-center gap-2">Pilih Starter</a>
+                              </div>
+                              <div className="bg-indigo-50/50 rounded-3xl p-6 md:p-8 border-2 border-indigo-500 shadow-xl flex flex-col relative transform md:scale-105">
+                                  <div className="absolute top-0 inset-x-0 flex justify-center"><span className="bg-indigo-500 text-white text-[10px] font-black uppercase tracking-widest px-4 py-1 rounded-b-xl">Paling Laris</span></div>
+                                  <h3 className="text-xl font-bold text-center mb-4 mt-2">Paket Pro</h3>
+                                  <div className="text-center mb-6"><span className="text-4xl font-black">Rp 120.000</span><p className="text-xs text-rose-500 mt-1 font-bold line-through">Rp 350.000</p></div>
+                                  <div className="space-y-4 flex-1 mb-8 text-sm font-bold text-slate-800">
+                                      <p className="flex items-center gap-3"><CheckCircle2 size={20} className="text-indigo-600" weight="fill"/> +15 Kelas & +200 Siswa</p>
+                                      <p className="flex items-center gap-3"><CheckCircle2 size={20} className="text-indigo-600" weight="fill"/> Link Pendaftaran Siswa</p>
+                                      <p className="flex items-center gap-3 border-t pt-3"><CheckCircle2 size={20} className="text-indigo-600" weight="fill"/> Etalase Promo Publik</p>
+                                  </div>
+                                  <a href={`https://s-tools.id/payment/index.html?amount=120000&item=Paket Pro EduLearn&kode_aplikasi=APP-STOOLS`} target="_blank" className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold flex justify-center items-center gap-2">Pilih Pro</a>
+                              </div>
+                              <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-sm flex flex-col">
+                                  <h3 className="text-xl font-bold text-center mb-4">Paket Enterprise</h3>
+                                  <div className="text-center mb-6"><span className="text-3xl font-black">Rp 250.000</span><p className="text-xs text-slate-400 mt-1 font-bold line-through">Rp 750.000</p></div>
+                                  <div className="space-y-4 flex-1 mb-8 text-sm font-bold text-slate-700">
+                                      <p className="flex items-center gap-3"><CheckCircle2 size={20} className="text-emerald-500" weight="fill"/> +50 Kelas & +1000 Siswa</p>
+                                      <p className="flex items-center gap-3"><CheckCircle2 size={20} className="text-emerald-500" weight="fill"/> Link Pendaftaran Siswa</p>
+                                      <p className="flex items-center gap-3 border-t pt-3"><CheckCircle2 size={20} className="text-emerald-500" weight="fill"/> Etalase Promo Publik (Selamanya)</p>
+                                  </div>
+                                  <a href={`https://s-tools.id/payment/index.html?amount=250000&item=Paket Enterprise EduLearn&kode_aplikasi=APP-STOOLS`} target="_blank" className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold flex justify-center items-center gap-2">Pilih Enterprise</a>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+            )}
+
+            <header className="bg-slate-900 text-white px-4 md:px-6 py-4 flex flex-col md:flex-row items-center justify-between shadow-md z-20 gap-4">
               <div className="flex items-center space-x-2">
                 <Database size={28} className="text-indigo-400" />
-                <h1 className="text-xl font-bold">Ruang Instruktur EduLearn</h1>
+                <div className="flex items-center gap-2"><h1 className="text-lg md:text-xl font-bold">EduLearn</h1><span className="bg-slate-800 text-indigo-400 text-[10px] md:text-xs px-2.5 py-1 rounded-md font-bold uppercase">Instruktur</span></div>
               </div>
-              <div className="flex space-x-2 bg-slate-800 p-1.5 rounded-xl overflow-x-auto mt-4 md:mt-0">
-                <button onClick={() => setAdminTab('courses')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center ${adminTab==='courses'?'bg-indigo-600 text-white':'text-slate-300'}`}><Book size={18} className="mr-2"/> Kelas</button>
-                <button onClick={() => setAdminTab('participants')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center ${adminTab==='participants'?'bg-indigo-600 text-white':'text-slate-300'}`}><Users size={18} className="mr-2"/> Siswa</button>
-                <button onClick={() => setAdminTab('info')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center ${adminTab==='info'?'bg-indigo-600 text-white':'text-slate-300'}`}><Article size={18} className="mr-2"/> Papan Info</button>
-                <button onClick={() => setAdminTab('profile')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center ${adminTab==='profile'?'bg-indigo-600 text-white':'text-slate-300'}`}><UserIcon size={18} className="mr-2"/> Profil</button>
+              <div className="flex space-x-2 bg-slate-800 p-1.5 rounded-xl overflow-x-auto scrollbar-hide w-full md:w-auto snap-x">
+                <button onClick={() => setAdminTab('courses')} className={`shrink-0 px-4 py-2 rounded-lg text-sm font-bold flex items-center ${adminTab==='courses'?'bg-indigo-600 text-white':'text-slate-300'}`}><Book size={18} className="mr-2"/> Kelas</button>
+                <button onClick={() => setAdminTab('participants')} className={`shrink-0 px-4 py-2 rounded-lg text-sm font-bold flex items-center ${adminTab==='participants'?'bg-indigo-600 text-white':'text-slate-300'}`}><Users size={18} className="mr-2"/> Siswa</button>
+                <button onClick={() => { setAdminTab('notifications'); markNotifsRead(); }} className={`shrink-0 px-4 py-2 rounded-lg text-sm font-bold flex items-center relative ${adminTab==='notifications'?'bg-indigo-600 text-white':'text-slate-300'}`}><MessageSquare size={18} className="mr-2"/> Forum {unread > 0 && <span className="absolute top-0.5 right-1 bg-rose-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">{unread}</span>}</button>
+                <button onClick={() => setAdminTab('info')} className={`shrink-0 px-4 py-2 rounded-lg text-sm font-bold flex items-center ${adminTab==='info'?'bg-indigo-600 text-white':'text-slate-300'}`}><Article size={18} className="mr-2"/> Papan Info</button>
+                <button onClick={() => setAdminTab('profile')} className={`shrink-0 px-4 py-2 rounded-lg text-sm font-bold flex items-center ${adminTab==='profile'?'bg-indigo-600 text-white':'text-slate-300'}`}><UserIcon size={18} className="mr-2"/> Profil</button>
               </div>
-              <button onClick={handleLogout} className="p-2.5 bg-slate-800 text-red-400 rounded-xl mt-4 md:mt-0"><LogOut size={20} /></button>
+              <div className="flex items-center gap-2 mt-4 md:mt-0">
+                  <span className="text-sm font-bold text-slate-300 hidden md:block mr-2">{session.data.name}</span>
+                  <button onClick={handleLogout} className="p-2.5 bg-slate-800 text-red-400 rounded-xl hover:bg-red-500 hover:text-white"><LogOut size={20} /></button>
+              </div>
             </header>
 
-            <div className="flex-1 p-6 lg:p-8 max-w-7xl mx-auto w-full">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+            <div className="flex-1 p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                   <div className="bg-white p-6 rounded-3xl border shadow-sm flex items-center"><div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mr-4"><Book size={26}/></div><div><p className="text-xs font-bold text-slate-400 uppercase">Sisa Kuota Kelas</p><h4 className="text-3xl font-black">{myAdmin.maxCourses || 0} Kelas</h4></div></div>
                   <div className="bg-white p-6 rounded-3xl border shadow-sm flex items-center"><div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mr-4"><Users size={26}/></div><div><p className="text-xs font-bold text-slate-400 uppercase">Sisa Kuota Siswa</p><h4 className="text-3xl font-black">{myAdmin.maxParticipants || 0} Siswa</h4></div></div>
+                  <div className="bg-white p-6 rounded-3xl border shadow-sm flex flex-col justify-center sm:col-span-2 lg:col-span-1 gap-2.5">
+                      <p className="text-xs font-bold text-slate-400 uppercase text-center lg:text-left">Butuh Penambahan Kuota?</p>
+                      <div className="flex gap-2 w-full">
+                          <button onClick={() => { if(hasPendingRequest) showToast("Permintaan sedang ditinjau!"); else setReqQuotaModal({ isOpen: true, reason: "", reqCourses: 5, reqParticipants: 50 }); }} className={`flex-1 font-extrabold py-3 rounded-2xl text-xs flex items-center justify-center gap-1.5 ${hasPendingRequest ? 'bg-slate-100 text-slate-400' : 'bg-slate-900 text-white'}`}><IconWrapper name={hasPendingRequest ? "clock" : "paper-plane-right"} size={14} weight="bold"/><span>{hasPendingRequest ? "Tertunda" : "Ajukan Limit"}</span></button>
+                          <button onClick={() => setShowPricingModal(true)} className="flex-1 bg-amber-500 text-slate-900 font-black py-3 rounded-2xl text-xs flex items-center justify-center gap-1.5"><Coffee size={14} weight="bold"/><span>Traktir SenTools</span></button>
+                      </div>
+                  </div>
               </div>
 
               {adminTab === 'courses' && (
-                <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-                  <div className="xl:col-span-1 space-y-8">
-                    <div className="bg-white p-6 rounded-3xl shadow-sm border">
-                      <h2 className="font-bold text-lg mb-6 flex items-center"><PlusCircle size={22} className="mr-2 text-indigo-600" />Buka Kelas Baru</h2>
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 md:gap-8">
+                  <div className="xl:col-span-1 space-y-6 md:space-y-8">
+                    <div className="bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-100">
+                      <h2 className="font-bold text-slate-800 mb-2 text-lg flex items-center"><PlusCircle size={22} className="mr-2 text-indigo-600" />Buka Kelas Baru</h2>
+                      <div className="bg-amber-50 border border-amber-200 p-3 mb-5 rounded-xl flex"><AlertCircle size={18} className="text-amber-600 mr-2 shrink-0" weight="fill" /><p className="text-[10px] text-amber-800 font-bold">Peringatan: Data kelas yang sudah diposting tidak dapat diubah kembali!</p></div>
                       <form onSubmit={handleCreateCourse} className="space-y-4">
                         <div className="flex items-center gap-2">
-                            <input name="code" id="crscode" required className="flex-1 p-3.5 bg-slate-50 border rounded-xl font-mono uppercase font-bold" placeholder="Kode Unik"/>
-                            <button type="button" onClick={()=>{document.getElementById('crscode').value = 'CR' + Math.floor(1000 + Math.random() * 9000).toString()}} className="w-14 h-12 bg-slate-100 flex items-center justify-center rounded-xl"><RefreshCw size={20}/></button>
+                            <input name="code" id="crscode" required maxLength={10} className="flex-1 p-3.5 bg-slate-50 border rounded-xl font-mono uppercase font-bold text-sm" placeholder="Kode Unik"/>
+                            <button type="button" onClick={()=>{document.getElementById('crscode').value = 'CR' + Math.floor(1000 + Math.random() * 9000).toString()}} className="w-14 h-[50px] bg-slate-100 flex items-center justify-center rounded-xl"><RefreshCw size={20}/></button>
                         </div>
-                        <input name="title" required className="w-full p-3.5 bg-slate-50 border rounded-xl" placeholder="Judul Kelas"/>
-                        <input name="inst" defaultValue={session.data.name} required className="w-full p-3.5 bg-slate-50 border rounded-xl" placeholder="Nama Pengajar"/>
-                        <input name="docLink" type="url" className="w-full p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl" placeholder="Link Materi Ekstra (Opsional)"/>
-                        <button type="submit" className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold">Posting Kelas</button>
+                        <input name="title" required maxLength={100} className="w-full p-3.5 bg-slate-50 border rounded-xl text-sm" placeholder="Judul Kelas Utama"/>
+                        <input name="inst" defaultValue={session.data.name} required className="w-full p-3.5 bg-slate-50 border rounded-xl text-sm" placeholder="Nama Pengajar"/>
+                        <input name="docLink" type="url" className="w-full p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-sm" placeholder="Link Materi Ekstra (Opsional)"/>
+                        <button type="submit" className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold mt-2">Posting Kelas</button>
                       </form>
                     </div>
-                    <div className="bg-white p-6 rounded-3xl shadow-sm border">
-                      <h2 className="font-bold text-lg mb-6 flex items-center"><Video size={22} className="mr-2 text-indigo-600" />Upload Video Modul</h2>
+                    <div className="bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-100">
+                      <h2 className="font-bold text-slate-800 mb-6 text-lg flex items-center"><Video size={22} className="mr-2 text-indigo-600" />Upload Video Modul</h2>
                       <form onSubmit={handleCreateModule} className="space-y-4">
-                        <select name="courseId" required className="w-full p-3.5 bg-slate-50 border rounded-xl" defaultValue=""><option value="" disabled>-- Pilih Kelas Tujuan --</option>{myCourses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}</select>
-                        <input name="title" required className="w-full p-3.5 bg-slate-50 border rounded-xl" placeholder="Judul Sesi Video"/>
-                        <input name="vidUrl" required type="url" className="w-full p-3.5 bg-rose-50 border border-rose-200 rounded-xl" placeholder="Link YT / Drive Video"/>
-                        <textarea name="desc" required className="w-full p-3.5 bg-slate-50 border rounded-xl resize-none" rows="3" placeholder="Deskripsi materi..."></textarea>
-                        <button type="submit" className="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold flex justify-center items-center"><PlayCircle size={20} className="mr-2"/> Simpan Modul</button>
+                        <select name="courseId" required className="w-full p-3.5 bg-slate-50 border rounded-xl text-sm" defaultValue=""><option value="" disabled>-- Pilih Kelas Tujuan --</option>{myCourses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}</select>
+                        <input name="title" required maxLength={100} className="w-full p-3.5 bg-slate-50 border rounded-xl text-sm" placeholder="Judul Sesi Video"/>
+                        <input name="vidUrl" required type="url" className="w-full p-3.5 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-sm" placeholder="Link YT / Drive Video"/>
+                        <textarea name="desc" required maxLength={500} className="w-full p-3.5 bg-slate-50 border rounded-xl resize-none text-sm" rows="3" placeholder="Tulis deskripsi sesi..."></textarea>
+                        <button type="submit" className="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold flex justify-center items-center mt-2"><PlayCircle size={20} className="mr-2"/> Simpan Modul</button>
                       </form>
                     </div>
                   </div>
                   <div className="xl:col-span-2">
-                    <div className="bg-white p-6 rounded-3xl shadow-sm border">
-                        <div className="flex justify-between items-center mb-8">
+                    <div className="bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-100">
+                        <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
                             <h2 className="font-extrabold text-xl flex items-center"><BookOpen size={24} className="mr-3 text-indigo-600" />Katalog Kelas Anda</h2>
-                            <input type="text" placeholder="Cari kursus..." value={searchCourse} onChange={e=>setSearchCourse(e.target.value)} className="w-64 px-4 py-3 bg-slate-50 border rounded-xl"/>
+                            <div className="relative w-full sm:w-auto"><MagnifyingGlass size={18} className="absolute left-3 top-3.5 text-slate-400"/><input type="text" placeholder="Cari kursus..." value={searchCourse} onChange={e=>setSearchCourse(e.target.value)} className="w-full sm:w-64 pl-10 pr-4 py-3 bg-slate-50 border rounded-xl text-sm"/></div>
                         </div>
+
                         {filteredMyCourses.map(course => (
-                        <div key={course.id} className="mb-8 border rounded-2xl overflow-hidden shadow-sm">
-                            <div className="bg-slate-50 border-b p-6 flex justify-between items-center">
-                                <div><span className="font-mono font-black bg-white border px-3 py-1 rounded-full uppercase">{course.code}</span><h3 className="font-extrabold text-xl mt-2">{course.title}</h3></div>
-                                <div className="flex gap-2">
-                                    <button onClick={() => openExamBuilder(course.id)} className="bg-amber-100 text-amber-800 px-5 py-2.5 rounded-xl font-bold flex items-center"><CheckSquareOffset size={18} className="mr-2"/> Ujian</button>
-                                    <button onClick={() => jumpToClassroom(course.id)} className="bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold flex items-center">Buka Kelas <ChevronRight size={16} className="ml-1"/></button>
+                        <div key={course.id} className={`mb-8 border rounded-2xl overflow-hidden shadow-sm ${!course.isActive ? 'opacity-60 grayscale-[30%]' : ''}`}>
+                            <div className="bg-slate-50 border-b p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                <div>
+                                    <div className="flex gap-2 mb-2"><span className="font-mono font-black tracking-widest bg-white border px-3 py-1 rounded-full uppercase">{course.code}</span>{!course.isActive && <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-[10px] font-bold">Tertutup</span>}</div>
+                                    <h3 className="font-extrabold text-xl mt-1">{course.title}</h3>
+                                </div>
+                                <div className="flex gap-2 w-full md:w-auto">
+                                    <button onClick={() => openExamBuilder(course.id)} className="flex-1 bg-amber-100 text-amber-800 px-5 py-2.5 rounded-xl font-bold text-sm flex justify-center items-center"><CheckSquareOffset size={18} className="mr-1.5"/> Soal Ujian</button>
+                                    <button onClick={() => jumpToClassroom(course.id)} className="flex-1 bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex justify-center items-center">Buka Kelas <ChevronRight size={16} className="ml-1"/></button>
                                 </div>
                             </div>
-                            <div className="p-6">
-                                <h4 className="text-xs font-bold text-slate-400 uppercase mb-4">Silabus Video</h4>
+                            <div className="p-5">
+                                <h4 className="text-xs font-bold text-slate-400 uppercase mb-4 px-2">Modul Video</h4>
                                 <div className="space-y-2">
-                                {course.modules.map((m, i) => (
-                                    <div key={m.id} className="flex justify-between items-center p-3 hover:bg-slate-50 rounded-xl border border-transparent transition">
+                                {course.modules.map((m, i) => {
+                                    const hasGraduates = enrollments.some(e => String(e.courseId) === String(course.id) && e.isGraduated);
+                                    return (
+                                    <div key={m.id} className="flex justify-between items-center p-3 hover:bg-slate-50 rounded-xl">
                                         <div className="flex items-center"><div className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-xs mr-3">{i+1}</div><span className="text-sm font-bold text-slate-700">{m.title}</span></div>
-                                        <button onClick={()=>handleDeleteModule(course.id, m.id)} className="text-slate-300 hover:text-red-500"><Trash2 size={18}/></button>
+                                        {hasGraduates ? <button className="text-slate-400 p-2"><Lock size={18} weight="fill"/></button> : <button onClick={()=>handleDeleteModule(course.id, m.id)} className="text-slate-300 hover:text-red-500 p-2"><Trash2 size={18}/></button>}
                                     </div>
-                                ))}
+                                    );
+                                })}
                                 </div>
                             </div>
                         </div>
@@ -428,33 +492,49 @@
               )}
 
               {adminTab === 'participants' && (
-                <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-                  <div className="xl:col-span-1 space-y-8">
-                    <div className="bg-white p-6 rounded-3xl shadow-sm border">
-                      <h2 className="font-bold text-lg mb-6 flex items-center"><PlusCircle size={22} className="mr-2 text-emerald-600" />Daftar Siswa Manual</h2>
+                <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 md:gap-8">
+                  <div className="xl:col-span-1 space-y-6 md:space-y-8">
+                    <div className="bg-gradient-to-br from-indigo-600 to-blue-700 p-6 rounded-3xl shadow-lg text-white relative overflow-hidden">
+                        <div className="absolute top-0 right-0 -mr-4 -mt-4 text-white/10"><IconWrapper name="link" size={100} weight="fill"/></div>
+                        <h2 className="font-extrabold text-lg mb-2 flex items-center z-10 relative"><IconWrapper name="sparkle" size={20} className="mr-2 text-indigo-200" weight="fill"/> Generator Link</h2>
+                        <p className="text-xs text-indigo-100 mb-5 relative z-10">Buat tautan undangan agar siswa dapat mendaftar mandiri ke kelas Anda.</p>
+                        <a href="link.html" target="_blank" className="w-full bg-white text-indigo-700 font-black py-3.5 rounded-xl flex items-center justify-center gap-2 relative z-10"><IconWrapper name="link" size={18} weight="bold"/> Buka Pembuat Link</a>
+                    </div>
+                    <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                      <h2 className="font-bold text-slate-800 mb-6 text-lg flex items-center"><PlusCircle size={22} className="mr-2 text-emerald-600" />Daftar Siswa Manual</h2>
                       <form onSubmit={handleRegisterParticipant} className="space-y-4">
-                        <input name="name" required className="w-full p-3.5 bg-slate-50 border rounded-xl" placeholder="Nama Lengkap"/>
-                        <input name="email" required type="email" className="w-full p-3.5 bg-slate-50 border rounded-xl" placeholder="Email (Akan di-email)"/>
+                        <input name="name" required className="w-full p-3.5 bg-slate-50 border rounded-xl text-sm" placeholder="Nama Lengkap"/>
+                        <input name="email" required type="email" className="w-full p-3.5 bg-slate-50 border rounded-xl text-sm" placeholder="Email (Akan di-email)"/>
                         <div className="flex gap-2">
-                            <input name="code" id="ptcode" required className="flex-1 p-3.5 bg-slate-50 border rounded-xl font-mono" placeholder="PIN Angka"/>
+                            <input name="code" id="ptcode" required maxLength={6} className="flex-1 p-3.5 bg-slate-50 border rounded-xl text-sm font-mono" placeholder="PIN Angka (6 Digit)"/>
                             <button type="button" onClick={()=>document.getElementById('ptcode').value = Math.floor(100000 + Math.random() * 900000).toString()} className="w-14 bg-slate-100 flex items-center justify-center rounded-xl"><RefreshCw size={20}/></button>
                         </div>
-                        <select name="courseId" required className="w-full p-3.5 bg-slate-50 border rounded-xl" defaultValue=""><option value="" disabled>-- Daftarkan ke Kelas --</option>{myCourses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}</select>
-                        <button type="submit" className="w-full bg-emerald-600 text-white py-4 rounded-xl font-bold">Daftarkan Siswa</button>
+                        <select name="courseId" required className="w-full p-3.5 bg-slate-50 border rounded-xl text-sm" defaultValue=""><option value="" disabled>-- Daftarkan ke Kelas --</option>{myCourses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}</select>
+                        <button type="submit" className="w-full bg-emerald-600 text-white py-4 rounded-xl font-bold mt-2">Buat & Daftarkan</button>
+                      </form>
+                    </div>
+                    <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                      <h2 className="font-bold text-slate-800 mb-6 text-lg flex items-center"><Users size={22} className="mr-2 text-indigo-600" />Siswa Tersedia</h2>
+                      <form onSubmit={handleEnrollExisting} className="space-y-4">
+                        <input name="email" required type="email" className="w-full p-3.5 bg-slate-50 border rounded-xl text-sm" placeholder="Ketik Email Siswa" />
+                        <select name="cId" required className="w-full p-3.5 bg-slate-50 border rounded-xl text-sm" defaultValue=""><option value="" disabled>-- Daftarkan ke Kelas --</option>{myCourses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}</select>
+                        <button type="submit" className="w-full bg-indigo-600 text-white py-4 rounded-xl font-bold mt-2">Daftarkan Saja</button>
                       </form>
                     </div>
                   </div>
-                  <div className="xl:col-span-3 bg-white p-6 rounded-3xl shadow-sm border">
-                    <div className="flex justify-between items-center mb-8">
+                  <div className="xl:col-span-3 bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-100">
+                    <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
                         <h2 className="font-extrabold text-xl flex items-center"><GraduationCap size={24} className="mr-3 text-indigo-600" />Progress Siswa</h2>
-                        <input type="text" placeholder="Cari siswa..." value={searchPart} onChange={e=>setSearchPart(e.target.value)} className="w-64 px-4 py-3 bg-slate-50 border rounded-xl"/>
+                        <div className="relative w-full sm:w-auto"><MagnifyingGlass size={18} className="absolute left-3 top-3.5 text-slate-400"/><input type="text" placeholder="Cari nama siswa..." value={searchPart} onChange={e=>setSearchPart(e.target.value)} className="w-full sm:w-64 pl-10 pr-4 py-3 bg-slate-50 border rounded-xl text-sm"/></div>
                     </div>
-                    <div className="overflow-x-auto"><table className="w-full text-left whitespace-nowrap"><thead className="bg-slate-50 text-slate-500 text-xs uppercase"><tr><th className="p-4">Siswa</th><th className="p-4">Kelas</th><th className="p-4">Progress</th><th className="p-4">Skor Ujian</th><th className="p-4">Status Akhir</th></tr></thead><tbody>
+                    <div className="overflow-x-auto"><table className="w-full text-left whitespace-nowrap"><thead className="bg-slate-50 text-slate-500 text-xs uppercase"><tr><th className="p-4">Siswa</th><th className="p-4">Pin Akses</th><th className="p-4">Kelas</th><th className="p-4">Track Belajar</th><th className="p-4">Nilai</th><th className="p-4">Status</th></tr></thead><tbody className="text-sm">
                         {filteredMyEnrs.map(enr => {
                           const part = participants.find(p => String(p.id) === String(enr.participantId)); const crs = courses.find(c => String(c.id) === String(enr.courseId)); const prog = calcProgress(enr, crs); if(!part || !crs) return null;
-                          return (<tr key={enr.id} className="border-t border-slate-100">
-                              <td className="p-4 font-bold">{part.name}</td><td className="p-4">{crs.title}</td><td className="p-4 font-bold text-slate-600">{prog}%</td><td className="p-4 font-bold">{enr.examScore !== null ? enr.examScore : '--'}</td>
-                              <td className="p-4">{enr.isGraduated ? <span className="text-emerald-700 bg-emerald-100 px-3 py-1.5 rounded-lg text-xs font-bold">Lulus</span> : <span className="text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg text-xs font-bold">Proses</span>}</td>
+                          return (<tr key={enr.id} className="hover:bg-slate-50 border-t border-slate-100">
+                              <td className="p-4 font-bold text-slate-800">{part.name}</td><td className="p-4 font-mono text-slate-500">{part.accessCode}</td><td className="p-4">{crs.title}</td>
+                              <td className="p-4"><div className="flex items-center w-32"><div className="w-full bg-slate-200 rounded-full h-2.5 mr-3"><div className="h-2.5 rounded-full bg-emerald-500" style={{width:`${prog}%`}}></div></div><span className="font-bold text-xs text-slate-600">{prog}%</span></div></td>
+                              <td className="p-4 font-extrabold">{enr.examScore !== null ? enr.examScore : '--'}</td>
+                              <td className="p-4">{enr.certDownloaded ? <span className="text-emerald-700 bg-emerald-100 px-3 py-1.5 rounded-lg text-[10px] font-bold">Sertifikat</span> : enr.isGraduated ? <span className="text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg text-[10px] font-bold">Lulus</span> : <span className="text-slate-500 bg-slate-100 px-3 py-1.5 rounded-lg text-[10px] font-bold">Proses</span>}</td>
                           </tr>)
                         })}
                     </tbody></table></div>
@@ -463,33 +543,57 @@
               )}
 
               {adminTab === 'info' && (
-                <div className="bg-white p-8 rounded-3xl shadow-sm border max-w-3xl mx-auto">
-                    <h2 className="font-extrabold mb-3 text-2xl flex items-center"><Article size={28} className="mr-3 text-indigo-600" /> Papan Info Siswa</h2>
-                    <div className="bg-slate-50 p-6 rounded-3xl border">
-                        <div className="flex justify-between items-center mb-6 border-b pb-4">
-                            <label className="font-bold text-lg">Publikasi Info</label>
-                            <button onClick={() => setInfoInstForm({...infoInstForm, show: !infoInstForm.show})} className="px-6 py-2 bg-white border rounded-full font-bold">{infoInstForm.show ? 'Aktif' : 'Sembunyikan'}</button>
+                <div className="bg-white p-6 md:p-10 rounded-3xl shadow-sm border max-w-3xl mx-auto">
+                    <h2 className="font-extrabold text-slate-800 mb-8 text-2xl flex items-center"><Article size={28} className="mr-3 text-indigo-600" /> Papan Info Siswa</h2>
+                    <div className="bg-slate-50 p-6 md:p-8 rounded-3xl border border-slate-200">
+                        <div className="flex justify-between items-center mb-6 border-b border-slate-200 pb-6">
+                            <label className="font-extrabold text-lg">Sakelar Publikasi</label>
+                            <button onClick={() => setInfoInstForm({...infoInstForm, show: !infoInstForm.show})} className={`px-6 py-2.5 rounded-full text-sm font-bold flex items-center ${infoInstForm.show ? 'bg-indigo-600 text-white' : 'bg-white border text-slate-500'}`}>{infoInstForm.show ? <ToggleRight size={22} className="mr-2" weight="fill"/> : <ToggleLeft size={22} className="mr-2"/>} {infoInstForm.show ? 'ON - Mengudara' : 'OFF - Disembunyikan'}</button>
                         </div>
-                        <textarea value={infoInstForm.text} onChange={e => setInfoInstForm({...infoInstForm, text: e.target.value})} className="w-full p-4 border rounded-2xl resize-none mb-4" rows="4" placeholder="Tulis pengumuman kelas..."></textarea>
+                        <textarea value={infoInstForm.text} onChange={e => setInfoInstForm({...infoInstForm, text: e.target.value})} className="w-full p-5 border rounded-2xl resize-none mb-6 text-base" rows="5" placeholder="Cth: Jangan lupa kerjakan Quiz..."></textarea>
                         <button onClick={handleUpdateAdminInfo} className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold">Terapkan Perubahan</button>
                     </div>
                 </div>
               )}
 
               {adminTab === 'profile' && (
-                <div className="bg-white p-8 rounded-3xl shadow-sm border max-w-2xl mx-auto">
-                  <h2 className="font-extrabold mb-6 text-2xl flex items-center"><UserIcon size={28} className="mr-3 text-indigo-600" /> Profil Publik</h2>
+                <div className="bg-white p-6 md:p-10 rounded-3xl shadow-sm border max-w-2xl mx-auto">
+                  <h2 className="font-extrabold text-slate-800 mb-8 text-2xl flex items-center"><UserIcon size={28} className="mr-3 text-indigo-600" /> Profil Publik & Apresiasi</h2>
+                  
+                  <div className="bg-indigo-50 p-6 rounded-3xl border border-indigo-100 mb-6">
+                      <label className="text-xs font-bold text-indigo-800 uppercase block mb-3"><IconWrapper name="storefront" size={16} weight="fill" className="inline mr-1"/> Link Etalase Katalog Promo Anda</label>
+                      <div className="flex gap-3">
+                          <input type="text" readOnly value={`https://s-tools.id/edu/kelas.html?instructor=${session.data.username}`} className="flex-1 p-4 bg-white border border-indigo-200 rounded-2xl text-indigo-900 font-medium text-sm" />
+                          <button type="button" onClick={() => { navigator.clipboard.writeText(`https://s-tools.id/edu/kelas.html?instructor=${session.data.username}`); showToast("Link disalin!"); }} className="bg-indigo-600 text-white px-5 rounded-2xl font-bold"><IconWrapper name="copy" size={18} weight="bold" /></button>
+                      </div>
+                      <p className="text-[10px] text-indigo-500 mt-3">* Fitur Etalase Publik ini butuh langganan <b>Paket Enterprise</b>.</p>
+                  </div>
+                  
                   <form onSubmit={handleUpdateProfile} className="space-y-6">
                       <div className="bg-emerald-50 p-6 rounded-3xl border border-emerald-100">
-                          <label className="font-bold text-emerald-800 mb-2 block">Nomor WhatsApp Interaksi</label>
-                          <input type="text" value={profileForm.whatsapp} onChange={e=>setProfileForm({...profileForm, whatsapp: e.target.value.replace(/[^0-9]/g, '')})} className="w-full p-4 border-0 rounded-xl font-bold text-emerald-900" placeholder="6281234..." />
+                          <label className="text-xs font-bold text-emerald-800 uppercase block mb-3"><IconWrapper name="whatsapp-logo" size={16} weight="fill" className="inline mr-1"/> Nomor WhatsApp Interaksi</label>
+                          <input type="text" value={profileForm.whatsapp} onChange={e=>setProfileForm({...profileForm, whatsapp: e.target.value.replace(/[^0-9]/g, '')})} className="w-full p-4 border-0 rounded-2xl bg-white text-emerald-900 font-medium" placeholder="628123456789" />
                       </div>
                       <div className="bg-amber-50 p-6 rounded-3xl border border-amber-100">
-                          <label className="font-bold text-amber-800 mb-2 block">Link Trakteer / Donasi</label>
-                          <input type="url" value={profileForm.donationLink} onChange={e=>setProfileForm({...profileForm, donationLink: e.target.value})} className="w-full p-4 border-0 rounded-xl font-bold text-amber-900" placeholder="https://trakteer.id/..." />
+                          <label className="text-xs font-bold text-amber-800 uppercase block mb-3"><IconWrapper name="heart" size={16} weight="fill" className="inline mr-1"/> Tautan Apresiasi Kreator</label>
+                          <input type="url" value={profileForm.donationLink} onChange={e=>setProfileForm({...profileForm, donationLink: e.target.value})} className="w-full p-4 border-0 rounded-2xl bg-white text-amber-900 font-medium" placeholder="https://trakteer.id/..." />
                       </div>
-                      <button type="submit" className="w-full bg-slate-900 text-white py-4 rounded-xl font-extrabold">Simpan Profil</button>
+                      <button type="submit" className="w-full bg-slate-900 text-white py-4 rounded-xl font-extrabold">Simpan Profil Publik</button>
                   </form>
+                </div>
+              )}
+
+              {adminTab === 'notifications' && (
+                <div className="bg-white p-6 md:p-10 rounded-3xl shadow-sm border max-w-4xl mx-auto">
+                  <h2 className="font-extrabold text-slate-800 mb-8 text-2xl flex items-center"><MessageSquare size={28} className="mr-3 text-indigo-600" /> Forum Interaktif Siswa</h2>
+                  <div className="space-y-4">
+                      {myNotifs.length === 0 ? <div className="text-center p-12"><p className="text-slate-400 font-medium">Kotak masuk sepi. Belum ada siswa yang berdiskusi.</p></div> : myNotifs.map(n => (
+                          <div key={n.id} className={`flex justify-between items-center p-5 rounded-2xl border ${n.isRead ? 'bg-white' : 'bg-indigo-50 border-indigo-200'}`}>
+                              <div><div className="flex items-center mb-1"><span className="w-2 h-2 rounded-full bg-indigo-500 mr-2"></span><p className="font-bold text-slate-800">{n.text}</p></div><p className="text-xs text-slate-400 uppercase ml-4">{n.time}</p></div>
+                              {n.courseId && <button onClick={() => jumpToClassroom(n.courseId, n.moduleId)} className="bg-slate-900 text-white px-5 py-2.5 rounded-xl font-bold">Balas di Kelas</button>}
+                          </div>
+                      ))}
+                  </div>
                 </div>
               )}
             </div>
