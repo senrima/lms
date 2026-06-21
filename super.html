@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduLearn - Pusat Kontrol SenTools</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.23.6/babel.min.js"></script>
+  <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const _0xDbChunks = [
+        "aHR0cHM6Ly9zY3JpcHQuZ29v",
+        "Z2xlLmNvbS9tYWNyb3Mvcy9B",
+        "S2Z5Y2J6RXdlUkQ2dTVmeGVH",
+        "SEtOR0VJTFhZOWkzcXhibTdP",
+        "QVlMZHRaeGxHdmdEOXhDb01D",
+        "aUN3OGJDbmpDLXhad3cxbksv",
+        "ZXhlYw=="
+    ];
+    const DEFAULT_SHEETS_URL = atob(_0xDbChunks.join(""));
+    const EMAIL_BUTTONS_HTML = `<br><br><div style="text-align:center;"><a href="https://s-tools.id/edu/" style="background-color: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold; font-family: sans-serif; margin-right: 10px; margin-bottom: 10px;">Masuk ke Dashboard</a></div>`;
+
+    const IconWrapper = ({ name, size = 24, className = "", weight="regular" }) => <i className={`ph${weight === 'fill' ? '-fill' : weight === 'duotone' ? '-duotone' : weight === 'bold' ? '-bold' : ''} ph-${name} ${className}`} style={{ fontSize: size }}></i>;
+    const ShieldCheck = (p) => <IconWrapper name="shield-check" {...p} />;
+    const Database = (p) => <IconWrapper name="database" {...p} />;
+    const BookOpen = (p) => <IconWrapper name="book-open" {...p} />;
+    const GraduationCap = (p) => <IconWrapper name="graduation-cap" {...p} />;
+    const Bell = (p) => <IconWrapper name="bell" {...p} />;
+    const Article = (p) => <IconWrapper name="article" {...p} />;
+    const LogOut = (p) => <IconWrapper name="sign-out" {...p} />;
+    const Users = (p) => <IconWrapper name="users" {...p} />;
+    const PlusCircle = (p) => <IconWrapper name="plus-circle" {...p} />;
+    const MagnifyingGlass = (p) => <IconWrapper name="magnifying-glass" {...p} />;
+    const CheckCircle2 = (p) => <IconWrapper name="check-circle" {...p} />;
+    const X = (p) => <IconWrapper name="x" {...p} />;
+    const ToggleLeft = (p) => <IconWrapper name="toggle-left" {...p} />;
+    const ToggleRight = (p) => <IconWrapper name="toggle-right" {...p} />;
+    const Award = (p) => <IconWrapper name="medal" {...p} />;
+
+    const calcProgress = (enr, crs) => { 
+        if (!crs || !crs.modules || crs.modules.length === 0 || !enr) return 0; 
+        if (enr.isGraduated) return 100;
+        let completedArray = [];
+        if (Array.isArray(enr.completedModules)) { completedArray = enr.completedModules; } 
+        else if (typeof enr.completedModules === 'string') { try { completedArray = JSON.parse(enr.completedModules); } catch (e) { completedArray = []; } }
+        let prog = Math.round((completedArray.length / crs.modules.length) * 100); 
+        return prog > 100 ? 100 : prog;
+    };
+
+    function SuperApp() {
+      const [session, setSession] = React.useState(() => JSON.parse(sessionStorage.getItem('edu_session')) || null);
+      const [dbReady, setDbReady] = React.useState(false);
+      
+      const [admins, setAdmins] = React.useState([]);
+      const [courses, setCourses] = React.useState([]);
+      const [participants, setParticipants] = React.useState([]);
+      const [enrollments, setEnrollments] = React.useState([]);
+      const [notifications, setNotifications] = React.useState([]);
+
+      const [superTab, setSuperTab] = React.useState("dashboard"); 
+      const [searchInst, setSearchInst] = React.useState("");
+      const [searchCourse, setSearchCourse] = React.useState("");
+      const [searchPart, setSearchPart] = React.useState("");
+      const [toast, setToast] = React.useState(null);
+      const [confirmDialog, setConfirmDialog] = React.useState({ isOpen: false, message: "", onConfirm: null });
+      const [quotaModal, setQuotaModal] = React.useState({ isOpen: false, adminId: null, name: "", maxCourses: 0, maxParticipants: 0 });
+      const [infoSuperForm, setInfoSuperForm] = React.useState({ instText: '', showInst: false, partText: '', showPart: false });
+
+      const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
+
+      React.useEffect(() => {
+        if (!session || session.role !== 'super_admin') {
+          window.location.href = 'index.html';
+        }
+      }, [session]);
+
+      React.useEffect(() => {
+          const fetchUrl = DEFAULT_SHEETS_URL + '?nocache=' + new Date().getTime();
+          fetch(fetchUrl)
+            .then(res => res.json())
+            .then(data => {
+                if(data.admins) setAdmins(data.admins);
+                if(data.courses) setCourses(data.courses);
+                if(data.participants) setParticipants(data.participants);
+                if(data.enrollments) setEnrollments(data.enrollments);
+                if(data.notifications) setNotifications(data.notifications);
+                
+                const sup = data.admins?.find(a => String(a.id) === String(session?.data?.id));
+                if(sup) setInfoSuperForm({ instText: sup.info1||'', showInst: sup.showInfo1||false, partText: sup.info2||'', showPart: sup.showInfo2||false });
+                setDbReady(true);
+            }).catch(e => showToast("Gagal memuat database."));
+      }, []);
+
+      const execDbAction = async (localAction) => {
+        try {
+            localAction();
+            const payload = { admins, courses, participants, enrollments, notifications };
+            const postUrl = DEFAULT_SHEETS_URL + '?nocache=' + new Date().getTime();
+            fetch(postUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) }).catch(console.error);
+        } catch (error) { showToast("Gagal menyimpan data."); }
+      };
+
+      const triggerEmail = (emailAction) => {
+          const postUrl = DEFAULT_SHEETS_URL + '?nocache=' + new Date().getTime();
+          fetch(postUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ emailAction }) }).catch(console.error);
+      };
+
+      const handleLogout = () => { sessionStorage.removeItem('edu_session'); window.location.href = 'index.html'; };
+
+      const handleRegisterAdmin = async (e) => {
+        e.preventDefault(); const fd = new FormData(e.target); const username = fd.get('username').trim().toLowerCase(); const email = fd.get('email').trim().toLowerCase();
+        if (admins.some(a => a.username === username)) return showToast("Username terpakai!");
+        const newAdminData = { 
+          name: fd.get('name'), username, email: email, password: fd.get('password'), 
+          isSuper: false, isActive: true, donationLink: '', info1: '', showInfo1: false, info2: '', showInfo2: false, 
+          info3: '', showInfo3: false, maxCourses: parseInt(fd.get('maxCourses')) || 5, maxParticipants: parseInt(fd.get('maxParticipants')) || 50,
+          whatsapp: "", allowPromo: false
+        };
+        await execDbAction(() => {
+              const updatedA = [...admins, { id: `adm_${Date.now()}`, ...newAdminData }];
+              setAdmins(updatedA);
+        });
+        e.target.reset(); showToast("Instruktur Ditambahkan!");
+        triggerEmail({
+            tujuan: email, subjek: "Akun Instruktur EduLearn Berhasil Dibuat", namaPengguna: newAdminData.name,
+            isiPesanInti: `Akun Instruktur Anda telah berhasil dibuat. Silakan login menggunakan S-Tools ID.` + EMAIL_BUTTONS_HTML
+        });
+      };
+
+      const handleToggleActiveAdmin = async (id, currentStatus) => {
+        await execDbAction(() => setAdmins(admins.map(a => a.id === id ? { ...a, isActive: !currentStatus } : a))); 
+        showToast(!currentStatus ? "Akun Diaktifkan" : "Akun Dinonaktifkan");
+      };
+
+      const handleTogglePromo = async (id, currentStatus) => {
+        await execDbAction(() => setAdmins(admins.map(a => a.id === id ? { ...a, allowPromo: !currentStatus } : a))); 
+        showToast(!currentStatus ? "Hak Promo Diaktifkan" : "Hak Promo Dicabut");
+      };
+
+      const handleToggleActiveCourse = async (id, currentStatus) => {
+        await execDbAction(() => setCourses(courses.map(c => c.id === id ? { ...c, isActive: !currentStatus } : c))); 
+        showToast(!currentStatus ? "Kursus Diaktifkan" : "Kursus Dinonaktifkan");
+      };
+
+      const handleUpdateInstructorQuota = async (e) => {
+        e.preventDefault();
+        await execDbAction(() => setAdmins(admins.map(a => String(a.id) === String(quotaModal.adminId) ? { ...a, maxCourses: parseInt(quotaModal.maxCourses), maxParticipants: parseInt(quotaModal.maxParticipants) } : a)));
+        setQuotaModal({ ...quotaModal, isOpen: false }); showToast("Kuota Instruktur Berhasil Diperbarui!");
+      };
+
+      const handleApproveLimitRequest = async (notifId, instructorId, reqCourses, reqParticipants, isApproved) => {
+         const addedCourses = parseInt(reqCourses) || 0; const addedParticipants = parseInt(reqParticipants) || 0;
+         await execDbAction(() => {
+             if (isApproved) setAdmins(admins.map(a => String(a.id) === String(instructorId) ? { ...a, maxCourses: (a.maxCourses || 0) + addedCourses, maxParticipants: (a.maxParticipants || 0) + addedParticipants } : a));
+             setNotifications(notifications.map(n => String(n.id) === String(notifId) ? { ...n, isRead: true } : n));
+         });
+         showToast(isApproved ? "Permintaan disetujui!" : "Permintaan ditolak.");
+      };
+
+      const handleUpdateAdminInfo = async () => {
+          await execDbAction(() => setAdmins(admins.map(a => String(a.id) === String(session.data.id) ? { ...a, info1: infoSuperForm.instText, showInfo1: infoSuperForm.showInst, info2: infoSuperForm.partText, showInfo2: infoSuperForm.showPart } : a))); 
+          showToast("Papan Informasi Diperbarui!");
+      };
+
+      if (!session || !dbReady) return <div className="min-h-screen flex items-center justify-center">Memuat Sistem Pusat...</div>;
+
+      const safeLower = (str) => (str || '').toString().toLowerCase();
+      const regularAdmins = admins.filter(a => !(a.isSuper === true || a.isSuper === 'true' || a.isSuper === 'TRUE'));
+      const filteredAdmins = regularAdmins.filter(a => safeLower(a.name).includes(safeLower(searchInst)) || safeLower(a.username).includes(safeLower(searchInst)));
+      const filteredCourses = courses.filter(c => safeLower(c.title).includes(safeLower(searchCourse)) || safeLower(c.code).includes(safeLower(searchCourse)));
+      const allEnrs = enrollments.map(enr => { const p = participants.find(x => String(x.id) === String(enr.participantId)); const c = courses.find(x => String(x.id) === String(enr.courseId)); return { ...enr, pName: p?.name||'', pEmail: p?.email||'', cTitle: c?.title||'', prog: calcProgress(enr,c) }; });
+      const filteredEnrs = allEnrs.filter(e => safeLower(e.pName).includes(safeLower(searchPart)) || safeLower(e.cTitle).includes(safeLower(searchPart)));
+
+      return (
+        <div className="min-h-screen bg-slate-50 flex flex-col">
+            {toast && <div className="fixed top-4 right-4 z-[100] bg-emerald-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2"><CheckCircle2 size={20}/><span>{toast}</span></div>}
+            
+            {quotaModal.isOpen && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+                    <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl">
+                        <div className="flex justify-between items-center border-b pb-4 mb-6">
+                            <div><h3 className="text-lg font-black">Kelola Kuota</h3><p className="text-xs text-slate-500">{quotaModal.name}</p></div>
+                            <button onClick={() => setQuotaModal({ ...quotaModal, isOpen: false })} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center"><X size={16} /></button>
+                        </div>
+                        <form onSubmit={handleUpdateInstructorQuota} className="space-y-4">
+                            <div><label className="text-xs font-bold text-slate-500 uppercase">Batas Kelas</label><input type="number" min="0" required value={quotaModal.maxCourses} onChange={e => setQuotaModal({ ...quotaModal, maxCourses: e.target.value })} className="w-full p-3.5 bg-slate-50 border rounded-xl font-bold" /></div>
+                            <div><label className="text-xs font-bold text-slate-500 uppercase">Batas Siswa</label><input type="number" min="0" required value={quotaModal.maxParticipants} onChange={e => setQuotaModal({ ...quotaModal, maxParticipants: e.target.value })} className="w-full p-3.5 bg-slate-50 border rounded-xl font-bold" /></div>
+                            <button type="submit" className="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-xl">Simpan Perubahan</button>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            <header className="bg-slate-900 text-white px-4 md:px-6 py-4 flex flex-col md:flex-row items-center justify-between shadow-md">
+              <div className="flex items-center space-x-3 w-full md:w-auto justify-center md:justify-start">
+                <ShieldCheck size={28} className="text-amber-400" />
+                <h1 className="text-lg md:text-xl font-bold">EduLearn Super Admin</h1>
+              </div>
+              <div className="flex space-x-2 bg-slate-800 p-1.5 rounded-xl overflow-x-auto mt-4 md:mt-0 w-full md:w-auto">
+                <button onClick={() => setSuperTab('dashboard')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center ${superTab==='dashboard'?'bg-amber-500 text-slate-900':'text-slate-300'}`}><Database size={18} className="mr-2"/> Dasbor</button>
+                <button onClick={() => setSuperTab('instructors')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center ${superTab==='instructors'?'bg-amber-500 text-slate-900':'text-slate-300'}`}><IconWrapper name="users-three" size={18} className="mr-2" /> Instruktur</button>
+                <button onClick={() => setSuperTab('courses')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center ${superTab==='courses'?'bg-amber-500 text-slate-900':'text-slate-300'}`}><BookOpen size={18} className="mr-2"/> Kursus</button>
+                <button onClick={() => setSuperTab('participants')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center ${superTab==='participants'?'bg-amber-500 text-slate-900':'text-slate-300'}`}><GraduationCap size={18} className="mr-2"/> Peserta</button>
+                <button onClick={() => setSuperTab('requests')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center ${superTab==='requests'?'bg-amber-500 text-slate-900':'text-slate-300'}`}><Bell size={18} className="mr-2"/> Permintaan</button>
+                <button onClick={() => setSuperTab('info')} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center ${superTab==='info'?'bg-amber-500 text-slate-900':'text-slate-300'}`}><Article size={18} className="mr-2"/> Info Pusat</button>
+              </div>
+              <button onClick={handleLogout} className="p-2.5 bg-slate-800 text-red-400 rounded-xl mt-4 md:mt-0"><LogOut size={20} /></button>
+            </header>
+
+            <div className="flex-1 p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+              {superTab === 'dashboard' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                      <div className="bg-white p-6 rounded-3xl shadow-sm border flex items-center"><div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 mr-5"><Users size={32}/></div><div><p className="text-slate-400 text-xs font-bold uppercase">Total Instruktur</p><h3 className="text-4xl font-extrabold">{regularAdmins.length}</h3></div></div>
+                      <div className="bg-white p-6 rounded-3xl shadow-sm border flex items-center"><div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 mr-5"><BookOpen size={32}/></div><div><p className="text-slate-400 text-xs font-bold uppercase">Total Kursus</p><h3 className="text-4xl font-extrabold">{courses.length}</h3></div></div>
+                      <div className="bg-white p-6 rounded-3xl shadow-sm border flex items-center"><div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600 mr-5"><GraduationCap size={32}/></div><div><p className="text-slate-400 text-xs font-bold uppercase">Total Peserta</p><h3 className="text-4xl font-extrabold">{participants.length}</h3></div></div>
+                  </div>
+              )}
+
+              {superTab === 'instructors' && (
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                  <div className="bg-white p-6 rounded-3xl shadow-sm border h-fit">
+                    <h2 className="font-bold mb-6 flex items-center"><PlusCircle size={22} className="mr-2 text-indigo-600" />Tambah Instruktur</h2>
+                    <form onSubmit={handleRegisterAdmin} className="space-y-4">
+                      <input name="name" required className="w-full p-3.5 bg-slate-50 border rounded-xl" placeholder="Nama Lengkap"/>
+                      <input name="username" required className="w-full p-3.5 bg-slate-50 border rounded-xl" placeholder="Username Khusus"/>
+                      <input name="email" type="email" required className="w-full p-3.5 bg-slate-50 border rounded-xl" placeholder="Email Instruktur"/>
+                      <input name="password" required className="w-full p-3.5 bg-slate-50 border rounded-xl" defaultValue="GURU123" placeholder="Password"/>
+                      <div className="grid grid-cols-2 gap-3">
+                        <input name="maxCourses" type="number" min="1" required defaultValue="5" className="w-full p-3 bg-slate-50 border rounded-xl" placeholder="Kuota Kelas" />
+                        <input name="maxParticipants" type="number" min="1" required defaultValue="50" className="w-full p-3 bg-slate-50 border rounded-xl" placeholder="Kuota Siswa" />
+                      </div>
+                      <button type="submit" className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold">Buat Akun</button>
+                    </form>
+                  </div>
+                  <div className="xl:col-span-2 bg-white p-6 rounded-3xl shadow-sm border">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="font-bold flex items-center"><Users size={22} className="mr-2"/>Daftar Instruktur</h2>
+                        <input type="text" placeholder="Cari instruktur..." value={searchInst} onChange={e=>setSearchInst(e.target.value)} className="w-64 px-4 py-2 bg-slate-50 border rounded-xl text-sm"/>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left whitespace-nowrap"><thead className="bg-slate-50 text-slate-500 text-xs uppercase"><tr><th className="p-4">Status</th><th className="p-4">Nama</th><th className="p-4">Sisa Kuota</th><th className="p-4 text-right">Aksi</th></tr></thead><tbody>
+                              {filteredAdmins.map(adm => (<tr key={adm.id} className="border-t border-slate-100">
+                                  <td className="p-4">{adm.isActive ? 'Aktif' : 'Nonaktif'}</td>
+                                  <td className="p-4 font-bold">{adm.name}</td>
+                                  <td className="p-4">{adm.maxCourses||0} K / {adm.maxParticipants||0} S</td>
+                                  <td className="p-4 text-right flex justify-end space-x-2">
+                                      <button onClick={() => handleTogglePromo(adm.id, adm.allowPromo)} className="text-xs bg-amber-100 text-amber-700 px-3 py-2 rounded-lg">{adm.allowPromo ? 'Cabut Promo' : 'Beri Promo'}</button>
+                                      <button onClick={() => setQuotaModal({ isOpen: true, adminId: adm.id, name: adm.name, maxCourses: adm.maxCourses, maxParticipants: adm.maxParticipants })} className="text-xs bg-slate-900 text-white px-3 py-2 rounded-lg">Kuota</button>
+                                      <button onClick={()=>handleToggleActiveAdmin(adm.id, adm.isActive)} className="text-xs border px-3 py-2 rounded-lg">{adm.isActive ? 'Nonaktifkan' : 'Aktifkan'}</button>
+                                  </td>
+                              </tr>))}
+                        </tbody></table>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {superTab === 'courses' && (
+                <div className="bg-white p-6 rounded-3xl shadow-sm border">
+                  <h2 className="font-bold mb-6 flex items-center"><BookOpen size={22} className="mr-2"/>Semua Kursus</h2>
+                  <div className="overflow-x-auto"><table className="w-full text-left whitespace-nowrap"><thead className="bg-slate-50 text-slate-500 text-xs uppercase"><tr><th className="p-4">Status</th><th className="p-4">Kode</th><th className="p-4">Nama</th><th className="p-4">Instruktur</th><th className="p-4 text-right">Aksi</th></tr></thead><tbody>
+                          {filteredCourses.map(crs => (<tr key={crs.id} className="border-t border-slate-100">
+                              <td className="p-4">{crs.isActive ? 'Aktif' : 'Tutup'}</td>
+                              <td className="p-4 font-mono">{crs.code}</td><td className="p-4 font-bold">{crs.title}</td><td className="p-4">{crs.instructor}</td>
+                              <td className="p-4 text-right"><button onClick={() => handleToggleActiveCourse(crs.id, crs.isActive)} className="text-xs border px-4 py-2 rounded-lg">Tutup Kelas</button></td>
+                          </tr>))}
+                  </tbody></table></div>
+                </div>
+              )}
+
+              {superTab === 'participants' && (
+                <div className="bg-white p-6 rounded-3xl shadow-sm border">
+                  <h2 className="font-bold mb-6 flex items-center"><GraduationCap size={22} className="mr-2"/>Progress Siswa Global</h2>
+                  <div className="overflow-x-auto"><table className="w-full text-left whitespace-nowrap"><thead className="bg-slate-50 text-slate-500 text-xs uppercase"><tr><th className="p-4">Siswa</th><th className="p-4">Kelas</th><th className="p-4">Progress</th><th className="p-4">Status</th></tr></thead><tbody>
+                          {filteredEnrs.map((enr, i) => (<tr key={i} className="border-t border-slate-100"><td className="p-4 font-bold">{enr.pName}</td><td className="p-4">{enr.cTitle}</td><td className="p-4">{enr.prog}%</td><td className="p-4">{enr.isGraduated ? 'Lulus' : 'Belajar'}</td></tr>))}
+                  </tbody></table></div>
+                </div>
+              )}
+
+              {superTab === 'requests' && (
+                <div className="bg-white p-6 rounded-3xl shadow-sm border max-w-4xl mx-auto">
+                  <h2 className="font-bold mb-8 text-2xl flex items-center"><Bell size={28} className="mr-3" /> Permintaan Kuota</h2>
+                  <div className="space-y-4">
+                      {notifications.filter(n => n.courseId === "REQ_UPGRADE").map(n => {
+                          let details = { name: "Instruktur", username: "", reason: n.text, reqCourses: 5, reqParticipants: 50 };
+                          try { details = JSON.parse(n.text); } catch(e) {}
+                          return (
+                            <div key={n.id} className="flex justify-between p-5 rounded-2xl border bg-amber-50">
+                                <div>
+                                    <p className="font-bold">Dari {details.name} (@{details.username})</p>
+                                    <p className="text-sm mt-1">Minta +{details.reqCourses} Kelas, +{details.reqParticipants} Siswa. Alasan: {details.reason}</p>
+                                </div>
+                                {!n.isRead && (
+                                    <div className="flex gap-2 items-center">
+                                        <button onClick={() => handleApproveLimitRequest(n.id, n.moduleId, details.reqCourses, details.reqParticipants, true)} className="bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold">Setujui</button>
+                                        <button onClick={() => handleApproveLimitRequest(n.id, n.moduleId, details.reqCourses, details.reqParticipants, false)} className="bg-rose-100 text-rose-700 px-4 py-2 rounded-xl font-bold">Tolak</button>
+                                    </div>
+                                )}
+                            </div>
+                          );
+                      })}
+                  </div>
+                </div>
+              )}
+
+              {superTab === 'info' && (
+                <div className="bg-white p-8 rounded-3xl shadow-sm border max-w-3xl mx-auto">
+                    <h2 className="font-bold mb-6 text-2xl flex items-center"><Article size={28} className="mr-3" /> Papan Informasi Pusat</h2>
+                    <div className="space-y-6">
+                        <div className="bg-slate-50 p-6 rounded-2xl border">
+                            <div className="flex justify-between items-center mb-4"><h3 className="font-bold">Info Instruktur</h3>
+                            <button onClick={() => setInfoSuperForm({...infoSuperForm, showInst: !infoSuperForm.showInst})} className="px-4 py-2 bg-white border rounded-full text-sm font-bold">{infoSuperForm.showInst ? 'Aktif' : 'Sembunyi'}</button></div>
+                            <textarea value={infoSuperForm.instText} onChange={e => setInfoSuperForm({...infoSuperForm, instText: e.target.value})} className="w-full p-4 border rounded-xl" rows="3" placeholder="Tulis info..."></textarea>
+                        </div>
+                        <div className="bg-slate-50 p-6 rounded-2xl border">
+                            <div className="flex justify-between items-center mb-4"><h3 className="font-bold">Info Peserta</h3>
+                            <button onClick={() => setInfoSuperForm({...infoSuperForm, showPart: !infoSuperForm.showPart})} className="px-4 py-2 bg-white border rounded-full text-sm font-bold">{infoSuperForm.showPart ? 'Aktif' : 'Sembunyi'}</button></div>
+                            <textarea value={infoSuperForm.partText} onChange={e => setInfoSuperForm({...infoSuperForm, partText: e.target.value})} className="w-full p-4 border rounded-xl" rows="3" placeholder="Tulis info..."></textarea>
+                        </div>
+                        <button onClick={handleUpdateAdminInfo} className="w-full bg-amber-500 text-slate-900 font-bold py-4 rounded-xl">Simpan Papan Informasi</button>
+                    </div>
+                </div>
+              )}
+            </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<SuperApp />);
+  </script>
+</body>
+</html>
