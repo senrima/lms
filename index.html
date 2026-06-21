@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduLearn - Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.23.6/babel.min.js"></script>
+  <script src="https://unpkg.com/@phosphor-icons/web@2.1.2"></script>
+</head>
+<body class="bg-slate-50">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const API_ENDPOINT = "https://api.s-tools.id";
+    const ShieldCheck = ({ size = 24, className = "" }) => <i className={`ph-fill ph-shield-check ${className}`} style={{ fontSize: size }}></i>;
+
+    function LoginApp() {
+      const [authStatus, setAuthStatus] = React.useState("Memverifikasi Keamanan Sistem...");
+
+      React.useEffect(() => {
+        // Logika verifikasi SSO Anda di sini
+        // Jika sukses, simpan sesi dan arahkan pengguna
+        const mockLoginSuccess = (role, data) => {
+          const sessData = { role, data };
+          sessionStorage.setItem('edu_session', JSON.stringify(sessData));
+          
+          // Mengarahkan ke halaman fisik yang berbeda
+          if (role === 'super_admin') window.location.href = 'super.html';
+          if (role === 'admin') window.location.href = 'instruktur.html';
+          if (role === 'participant') window.location.href = 'siswa.html';
+        };
+
+        // Contoh simulasi (Ganti dengan fetch ke API_ENDPOINT Anda)
+        setTimeout(() => mockLoginSuccess('admin', { name: "Bro Sandy", username: "senrima" }), 2000);
+      }, []);
+
+      return (
+        <div className="min-h-screen flex items-center justify-center p-4">
+            <div className="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md text-center">
+                <div className="w-24 h-24 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <ShieldCheck size={48} className="animate-bounce" />
+                </div>
+                <h1 className="text-2xl font-black text-slate-900 mb-2">Keamanan Sistem</h1>
+                <p className="text-slate-500">{authStatus}</p>
+            </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<LoginApp />);
+  </script>
+</body>
+</html>
