@@ -4,7 +4,7 @@ import '../index.css';
 
 const _0xDbChunks = ["aHR0cHM6Ly9zY3JpcHQuZ29v", "Z2xlLmNvbS9tYWNyb3Mvcy9B", "S2Z5Y2J6RXdlUkQ2dTVmeGVH", "SEtOR0VJTFhZOWkzcXhibTdP", "QVlMZHRaeGxHdmdEOXhDb01D", "aUN3OGJDbmpDLXhad3cxbksv", "ZXhlYw=="];
 //const DEFAULT_SHEETS_URL = atob(_0xDbChunks.join(""));
-const DEFAULT_SHEETS_URL = "https://lms.senrima-ms.workers.dev/";
+const DEFAULT_SHEETS_URL = "https://lms.senrima-ms.workers.dev/?kunci=RAHASIA-S-TOOLS";
 const LOGIN_PORTAL_URL = "https://s-tools.id/edu/page-instruktur.html";
 const EMAIL_BUTTONS_HTML = `<br><br><div style="text-align:center;"><a href="https://s-tools.id/edu/" style="background-color: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold; font-family: sans-serif; margin-right: 10px; margin-bottom: 10px;">Masuk ke Dashboard</a></div>`;
 
