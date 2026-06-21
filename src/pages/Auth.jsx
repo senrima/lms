@@ -2,229 +2,175 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import '../index.css';
 
-const API_ENDPOINT = "https://api.s-tools.id";
-const LOGIN_PORTAL_URL = "https://s-tools.id/edu/page-instruktur.html";
-
-const _0xDbChunks = [
-    "aHR0cHM6Ly9zY3JpcHQuZ29v",
-    "Z2xlLmNvbS9tYWNyb3Mvcy9B",
-    "S2Z5Y2J6RXdlUkQ2dTVmeGVH",
-    "SEtOR0VJTFhZOWkzcXhibTdP",
-    "QVlMZHRaeGxHdmdEOXhDb01D",
-    "aUN3OGJDbmpDLXhad3cxbksv",
-    "ZXhlYw=="
-];
-//const DEFAULT_SHEETS_URL = atob(_0xDbChunks.join(""));
+// URL Cloudflare Worker Anda
 const DEFAULT_SHEETS_URL = "https://lms.senrima-ms.workers.dev/?kunci=RAHASIA-S-TOOLS";
 
-const IconWrapper = ({ name, size = 24, className = "", weight="regular" }) => <i className={`ph${weight === 'fill' ? '-fill' : weight === 'duotone' ? '-duotone' : weight === 'bold' ? '-bold' : ''} ph-${name} ${className}`} style={{ fontSize: size }}></i>;
-const ShieldCheck = (p) => <IconWrapper name="shield-check" {...p} />;
-const X = (p) => <IconWrapper name="x" {...p} />;
-const Database = (p) => <IconWrapper name="database" {...p} />;
+const IconWrapper = ({ name, size = 24, className = "", weight="regular" }) => (
+    <i className={`ph${weight === 'fill' ? '-fill' : weight === 'duotone' ? '-duotone' : weight === 'bold' ? '-bold' : ''} ph-${name} ${className}`} style={{ fontSize: size }}></i>
+);
 
 function AuthApp() {
-  const [dbMode] = useState(() => localStorage.getItem('edu_db_mode') || 'sheets');
-  const [dbReady, setDbReady] = useState(false);
-  const [setupError, setSetupError] = useState("");
-  
-  const [admins, setAdmins] = useState([]);
-  const [participants, setParticipants] = useState([]);
+    const [loginMode, setLoginMode] = useState('siswa');
+    const [userId, setUserId] = useState('');
+    const [passKey, setPassKey] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [errorMsg, setErrorMsg] = useState('');
 
-  const [appMode, setAppMode] = useState('auth'); 
-  const [authStatus, setAuthStatus] = useState("Menginisiasi Keamanan Sistem...");
-  const [loginMatches, setLoginMatches] = useState(null);
-
-  useEffect(() => {
-    if (dbMode === 'local') {
-      setAdmins(JSON.parse(localStorage.getItem('edu_admins')) || []);
-      setParticipants(JSON.parse(localStorage.getItem('edu_participants')) || []);
-      setDbReady(true);
-    } else if (dbMode === 'sheets') {
-      const url = localStorage.getItem('edu_sheets_url') || DEFAULT_SHEETS_URL;
-      if(!url) { setAppMode('setup_db'); return; }
-      const fetchUrl = url + (url.includes('?') ? '&' : '?') + 'nocache=' + new Date().getTime();
-      fetch(fetchUrl)
-        .then(res => { if(!res.ok) throw new Error("Network error"); return res.json(); })
-        .then(data => {
-            if(data.admins) {
-                const uniqueAdmins = Array.from(new Map(data.admins.map(a => [a.id, a])).values());
-                setAdmins(uniqueAdmins); localStorage.setItem('edu_admins', JSON.stringify(uniqueAdmins));
+    useEffect(() => {
+        const session = sessionStorage.getItem('edu_session');
+        if (session) {
+            try {
+                const parsed = JSON.parse(session);
+                if (parsed.role === 'super_admin') window.location.href = 'super.html';
+                else if (parsed.role === 'admin') window.location.href = 'instruktur.html';
+                else if (parsed.role === 'participant') window.location.href = 'siswa.html';
+            } catch (e) {
+                sessionStorage.removeItem('edu_session');
             }
-            if(data.participants) {
-                setParticipants(data.participants); localStorage.setItem('edu_participants', JSON.stringify(data.participants));
+        }
+    }, []);
+
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        if (!userId || !passKey) {
+            setErrorMsg("Harap lengkapi semua kolom.");
+            return;
+        }
+
+        setIsLoading(true);
+        setErrorMsg('');
+
+        try {
+            const payload = loginMode === 'siswa'
+                ? { action: "login", loginType: "siswa", email: userId.trim().toLowerCase(), pin: passKey.trim() }
+                : { action: "login", loginType: "admin", username: userId.trim().toLowerCase(), password: passKey };
+
+            const respons = await fetch(DEFAULT_SHEETS_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const hasil = await respons.json();
+
+            if (hasil.status === "success") {
+                sessionStorage.setItem('edu_session', JSON.stringify({ role: hasil.role, data: hasil.data }));
+                if (hasil.role === "super_admin") window.location.href = 'super.html';
+                else if (hasil.role === "admin") window.location.href = 'instruktur.html';
+                else window.location.href = 'siswa.html';
+            } else {
+                setErrorMsg(hasil.message || "Login ditolak oleh server.");
             }
-            setDbReady(true);
-        })
-        .catch(e => { 
-            let errorMsg = "Database belum terkoneksi. Silakan periksa jaringan internet Anda atau coba lagi nanti.";
-            if (e.toString().includes("Failed to fetch") || e.toString().includes("Network error")) {
-                errorMsg = "Koneksi ke Database diblokir oleh browser (CORS). Anda HARUS memperbarui Deployment GAS dengan memilih 'Versi Baru' (New Version) pada opsi Kelola Penerapan.";
-            }
-            setSetupError(errorMsg); setAppMode('setup_db'); 
-        });
-    }
-  }, [dbMode]);
+        } catch (error) {
+            setErrorMsg("Gagal menghubungi server. Periksa koneksi internet Anda.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
-  useEffect(() => {
-      if (appMode === 'auth' && dbReady) {
-          const performSSO = async () => {
-              setAuthStatus("Memverifikasi Keamanan Sistem S-Tools ID...");
-              const localToken = localStorage.getItem('sessionToken');
-              const headers = { 'Content-Type': 'application/json' };
-              if (localToken) headers['x-auth-token'] = localToken;
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 font-sans animate-[fadeIn_0.3s_ease-out]">
+            <div className="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100">
+                <div className="bg-slate-900 p-8 text-center relative overflow-hidden">
+                    <div className="absolute top-0 right-0 -mr-6 -mt-6 text-white/5"><IconWrapper name="shield-check" size={150} weight="fill" /></div>
+                    <div className="relative z-10">
+                        <div className="w-16 h-16 bg-indigo-500 rounded-2xl flex items-center justify-center mx-auto mb-4 text-white shadow-lg shadow-indigo-500/30">
+                            <IconWrapper name="graduation-cap" size={36} weight="fill" />
+                        </div>
+                        <h1 className="text-2xl font-black text-white tracking-tight">EduLearn</h1>
+                        <p className="text-indigo-200 text-sm font-bold tracking-widest uppercase mt-1">by SenTools</p>
+                    </div>
+                </div>
 
-              try {
-                  const response = await fetch(API_ENDPOINT, {
-                      method: 'POST',
-                      headers: headers,
-                      credentials: 'include', 
-                      body: JSON.stringify({ kontrol: 'proteksi', action: 'getDashboardData' })
-                  });
-                  const result = await response.json();
-                  
-                  if (result.status === 'success' && result.userData) {
-                      setAuthStatus("Akses diterima! Membuka gerbang EduLearn...");
-                      const ssoEmail = String(result.userData.email || result.userData.username || '').trim().toLowerCase();
-                      
-                      const adminFound = admins.find(a => (a.email && String(a.email).trim().toLowerCase() === ssoEmail) || String(a.username).trim().toLowerCase() === ssoEmail);
-                      
-                      if (adminFound) {
-                          if (!adminFound.isActive) { 
-                              setAuthStatus("Akses ditolak: Akun Instruktur Anda dinonaktifkan oleh Sistem."); 
-                              return; 
-                          }
-                          const adminEmail = adminFound.email ? String(adminFound.email).trim().toLowerCase() : `${String(adminFound.username).trim().toLowerCase()}@edulearn.local`;
-                          let matchedPart = participants.find(p => p.email.trim().toLowerCase() === adminEmail);
-                          if (!matchedPart) {
-                              matchedPart = { id: 'p_virtual_' + adminFound.username, name: adminFound.name || adminFound.username, email: adminEmail, accessCode: adminFound.password };
-                          }
-                          const roles = [];
-                          const isItSuper = adminFound.isSuper === true || adminFound.isSuper === 'true' || adminFound.isSuper === 'TRUE';
-                          if (isItSuper) { roles.push({ id: 'super_admin', label: 'Super Admin', desc: 'Akses penuh ke semua kontrol.', icon: 'shield-check', color: 'from-amber-500 to-orange-600', url: 'super.html' }); }
-                          roles.push({ id: 'admin', label: 'Instruktur', desc: 'Kelola kelas Anda sendiri.', icon: 'chalkboard-teacher', color: 'from-indigo-500 to-indigo-700', url: 'instruktur.html' });
-                          roles.push({ id: 'participant', label: 'Peserta Belajar', desc: 'Masuk ke ruang belajar.', icon: 'graduation-cap', color: 'from-emerald-500 to-teal-600', url: 'siswa.html' });
+                <div className="p-8">
+                    <div className="flex bg-slate-100 p-1.5 rounded-xl mb-8">
+                        <button 
+                            type="button"
+                            onClick={() => { setLoginMode('siswa'); setUserId(''); setPassKey(''); setErrorMsg(''); }} 
+                            className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${loginMode === 'siswa' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            Peserta Didik
+                        </button>
+                        <button 
+                            type="button"
+                            onClick={() => { setLoginMode('admin'); setUserId(''); setPassKey(''); setErrorMsg(''); }} 
+                            className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${loginMode === 'admin' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            Pengajar
+                        </button>
+                    </div>
 
-                          setLoginMatches({ admin: adminFound, participant: matchedPart, roles });
-                          setAppMode('role_selection');
-                          return;
-                      }
+                    {errorMsg && (
+                        <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl flex items-start gap-3 text-red-600 animate-[fadeIn_0.2s_ease-out]">
+                            <IconWrapper name="warning-circle" size={20} weight="fill" className="shrink-0 mt-0.5" />
+                            <p className="text-sm font-bold">{errorMsg}</p>
+                        </div>
+                    )}
 
-                      const partFound = participants.find(p => p.email.trim().toLowerCase() === ssoEmail);
-                      if (partFound) {
-                          const sessData = { role: 'participant', data: partFound };
-                          sessionStorage.setItem('edu_session', JSON.stringify(sessData));
-                          window.location.href = 'siswa.html';
-                          return;
-                      }
+                    <form onSubmit={handleLogin} className="space-y-5">
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                                {loginMode === 'siswa' ? 'Alamat Email' : 'Username'}
+                            </label>
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                                    <IconWrapper name={loginMode === 'siswa' ? "envelope-simple" : "user"} size={20} weight="bold" />
+                                </div>
+                                <input 
+                                    type={loginMode === 'siswa' ? "email" : "text"} 
+                                    value={userId} 
+                                    onChange={(e) => setUserId(e.target.value)} 
+                                    className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-bold outline-none focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition" 
+                                    placeholder={loginMode === 'siswa' ? "email@contoh.com" : "Masukkan username"} 
+                                    required 
+                                />
+                            </div>
+                        </div>
 
-                      setAuthStatus(`Akses ditolak: Email (${ssoEmail}) belum terdaftar.`);
-                  } else {
-                      throw new Error("Sesi tidak valid");
-                  }
-              } catch (error) {
-                  setAuthStatus("Sesi ditolak. Mengarahkan Anda ke S-Tools ID...");
-                  localStorage.removeItem('sessionToken');
-                  setTimeout(() => {
-                      window.location.href = LOGIN_PORTAL_URL + "?redirect=" + encodeURIComponent(window.location.href);
-                  }, 1500);
-              }
-          };
-          
-          performSSO();
-      }
-  }, [appMode, dbReady, admins, participants]);
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                                {loginMode === 'siswa' ? 'PIN Akses (6 Digit)' : 'Kata Sandi'}
+                            </label>
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                                    <IconWrapper name={loginMode === 'siswa' ? "key" : "lock"} size={20} weight="bold" />
+                                </div>
+                                <input 
+                                    type="password" 
+                                    value={passKey} 
+                                    onChange={(e) => setPassKey(e.target.value)} 
+                                    className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-bold outline-none focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-50 transition" 
+                                    placeholder={loginMode === 'siswa' ? "••••••" : "Masukkan kata sandi"} 
+                                    required 
+                                />
+                            </div>
+                        </div>
 
-  const handleSelectRole = (role) => {
-    let sessData = null;
-    if (role.id === 'super_admin') { sessData = { role: 'super_admin', data: loginMatches.admin }; } 
-    else if (role.id === 'admin') { sessData = { role: 'admin', data: loginMatches.admin }; } 
-    else { sessData = { role: 'participant', data: loginMatches.participant }; }
-    
-    sessionStorage.setItem('edu_session', JSON.stringify(sessData));
-    window.location.href = role.url;
-  };
-
-  const handleCancel = () => {
-      setLoginMatches(null);
-      setAppMode('auth');
-      window.location.href = LOGIN_PORTAL_URL;
-  };
-
-  if (!dbReady && appMode !== 'setup_db') {
-      return (
-          <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
-              <div className="animate-spin text-indigo-600 mb-4"><IconWrapper name="spinner-gap" size={48} weight="bold" /></div>
-              <h2 className="text-xl font-bold text-slate-700">Menghubungkan ke Database...</h2>
-          </div>
-      );
-  }
-
-  if (appMode === 'setup_db') {
-      return (
-          <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-              <div className="bg-white p-8 rounded-3xl shadow-xl w-full max-w-md border border-slate-100 text-center">
-                  <div className="w-16 h-16 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                      <Database size={32} weight="fill" />
-                  </div>
-                  <h2 className="text-2xl font-extrabold text-slate-900">Koneksi Database Gagal</h2>
-                  <p className="text-slate-500 mt-2 mb-6">{setupError || "Gagal menghubungi database Google Sheets."}</p>
-                  <button onClick={() => window.location.reload()} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl transition shadow-lg">Coba Lagi</button>
-              </div>
-          </div>
-      );
-  }
-
-  if (appMode === 'auth') {
-      return (
-          <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-              <div className="bg-white p-8 md:p-10 rounded-3xl shadow-xl w-full max-w-md border border-slate-100 text-center relative overflow-hidden">
-                  <div className="absolute top-0 left-0 w-full h-1.5 bg-slate-100"><div className="h-full bg-indigo-600 animate-pulse w-full"></div></div>
-                  <div className="w-24 h-24 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner relative">
-                      <ShieldCheck size={48} weight="fill" className={authStatus.includes('ditolak') ? 'text-red-500' : 'animate-bounce'} />
-                      {!authStatus.includes('ditolak') && <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-indigo-600 animate-spin"></div>}
-                  </div>
-                  <h1 className="text-2xl font-black text-slate-900 tracking-tight mb-2">Keamanan Sistem</h1>
-                  <p className="text-slate-500 font-medium mb-6 text-sm px-4">{authStatus}</p>
-                  
-                  {authStatus && authStatus.includes('ditolak') && (
-                      <div className="mt-6 flex flex-col gap-3">
-                          <button onClick={() => window.location.href = LOGIN_PORTAL_URL + "?redirect=" + encodeURIComponent(window.location.href)} className="w-full bg-indigo-600 text-white px-4 py-3.5 rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-200">Login S-Tools ID</button>
-                      </div>
-                  )}
-              </div>
-          </div>
-      );
-  }
-
-  if (appMode === 'role_selection' && loginMatches) {
-      return (
-          <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-              <div className="bg-white p-8 md:p-10 rounded-3xl shadow-xl w-full max-w-lg border border-slate-100">
-                  <div className="text-center mb-8">
-                      <h2 className="text-2xl font-black text-slate-900 tracking-tight">Pilih Akses Peran</h2>
-                      <p className="text-slate-500 mt-2 text-sm">Sistem mendeteksi bahwa akun Anda memiliki beberapa otorisasi. Sebagai apa Anda ingin masuk hari ini?</p>
-                  </div>
-                  <div className="space-y-4">
-                      {loginMatches.roles.map(role => (
-                          <button key={role.id} onClick={() => handleSelectRole(role)} className="w-full text-left p-5 rounded-2xl border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 hover:shadow-md transition-all flex items-center group bg-white">
-                              <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${role.color} flex items-center justify-center text-white shrink-0 mr-5 shadow-inner group-hover:scale-105 transition-transform`}>
-                                  <IconWrapper name={role.icon} size={28} weight="fill" />
-                              </div>
-                              <div>
-                                  <h3 className="font-extrabold text-lg text-slate-800 group-hover:text-indigo-700 transition-colors">{role.label}</h3>
-                                  <p className="text-xs text-slate-500 font-medium mt-0.5 leading-relaxed">{role.desc}</p>
-                              </div>
-                          </button>
-                      ))}
-                  </div>
-                  <button onClick={handleCancel} className="w-full mt-6 py-3 text-slate-500 hover:text-red-500 font-bold text-sm transition flex items-center justify-center gap-1.5"><X size={16} weight="bold"/> Batal & Kembali</button>
-              </div>
-          </div>
-      );
-  }
-
-  return null;
+                        <button 
+                            type="submit" 
+                            disabled={isLoading} 
+                            className="w-full mt-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white py-4 rounded-xl font-black text-base shadow-lg shadow-indigo-200 transition transform active:scale-95 flex items-center justify-center"
+                        >
+                            {isLoading ? (
+                                <IconWrapper name="spinner-gap" size={24} weight="bold" className="animate-spin" />
+                            ) : (
+                                <>
+                                    <span>Masuk ke Sistem</span>
+                                    <IconWrapper name="sign-in" size={20} weight="bold" className="ml-2" />
+                                </>
+                            )}
+                        </button>
+                    </form>
+                </div>
+                <div className="bg-slate-50 p-4 text-center border-t border-slate-100">
+                    <p className="text-xs font-bold text-slate-400">
+                        <IconWrapper name="lock-key" size={14} className="inline mr-1" weight="fill" />
+                        Akses diamankan dengan S-Tools ID
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
 }
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<AuthApp />);
+ReactDOM.createRoot(document.getElementById('root')).render(<AuthApp />);
