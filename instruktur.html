@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduLearn - Dashboard Instruktur</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.23.6/babel.min.js"></script>
+</head>
+<body class="bg-slate-50">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    function InstrukturApp() {
+      // 1. Cek Sesi Keamanan
+      const session = JSON.parse(sessionStorage.getItem('edu_session'));
+      
+      React.useEffect(() => {
+        if (!session || session.role !== 'admin') {
+          window.location.href = 'index.html';
+        }
+      }, [session]);
+
+      // 2. Fungsi Logout
+      const handleLogout = () => {
+        sessionStorage.removeItem('edu_session');
+        window.location.href = 'index.html';
+      };
+
+      if (!session || session.role !== 'admin') return null;
+
+      // 3. Tampilan Dashboard Instruktur
+      return (
+        <div className="min-h-screen flex flex-col">
+          <header className="bg-slate-900 text-white p-4 flex justify-between items-center">
+            <h1 className="text-xl font-bold">Dashboard Instruktur</h1>
+            <div className="flex items-center gap-4">
+              <span>Halo, {session.data.name}</span>
+              <button onClick={handleLogout} className="bg-red-500 px-4 py-2 rounded text-white font-bold">Keluar</button>
+            </div>
+          </header>
+          
+          <main className="p-8">
+            {/* Pindahkan komponen tabel kelas dan manajemen siswa Anda ke sini */}
+            <h2 className="text-2xl font-bold">Katalog Kelas Anda</h2>
+          </main>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<InstrukturApp />);
+  </script>
+</body>
+</html>
