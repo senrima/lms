@@ -15,7 +15,7 @@ const _0xDbChunks = [
     "ZXhlYw=="
 ];
 //const DEFAULT_SHEETS_URL = atob(_0xDbChunks.join(""));
-const DEFAULT_SHEETS_URL = "https://lms.senrima-ms.workers.dev/";
+const DEFAULT_SHEETS_URL = "https://lms.senrima-ms.workers.dev/?kunci=RAHASIA-S-TOOLS";
 
 const IconWrapper = ({ name, size = 24, className = "", weight="regular" }) => <i className={`ph${weight === 'fill' ? '-fill' : weight === 'duotone' ? '-duotone' : weight === 'bold' ? '-bold' : ''} ph-${name} ${className}`} style={{ fontSize: size }}></i>;
 const ShieldCheck = (p) => <IconWrapper name="shield-check" {...p} />;
